@@ -48,9 +48,11 @@ typedef enum {
     Event__INPUT_CHANGE,
     Event__CUSTOM_KEY,
     Event__ACTIVE_ENTRY,
-    Event__SELECT_ENTRY, 
+    Event__SELECT_ENTRY,
+    Event__SELECT_ENTRY_ALT,
     Event__DELETE_ENTRY, 
     Event__EXEC_CUSTOM_INPUT,
+    Event__EXEC_CUSTOM_INPUT_ALT,
     Event__COMPLETE,
     Event__CANCEL
 } Event;
@@ -58,10 +60,12 @@ typedef enum {
 static const char *event_enum_labels[] = {
     "INPUT_CHANGE",
     "CUSTOM_KEY",
-    "ACTIVE_ENTRY", 
-    "SELECT_ENTRY", 
+    "ACTIVE_ENTRY",
+    "SELECT_ENTRY",
+    "SELECT_ENTRY_ALT",
     "DELETE_ENTRY", 
     "EXEC_CUSTOM_INPUT",
+    "EXEC_CUSTOM_INPUT_ALT",
     "COMPLETE",
     "CANCEL"
 };
@@ -71,8 +75,10 @@ static const char *event_labels[] = {
     "custom key",
     "active entry",
     "select entry",
+    "select entry alt",
     "delete entry",
     "execute custom input",
+    "execute custom input alt",
     "complete",
     "cancel"
 };
@@ -407,7 +413,9 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
         if(selected_line >= pageData->lines->len){ return RELOAD_DIALOG; }
         LineData * lineData = &g_array_index (pageData->lines, LineData, selected_line);
         if (lineData->nonselectable) { return RELOAD_DIALOG; }
-        blocks_mode_private_data_write_to_channel(data, Event__SELECT_ENTRY, lineData->text, lineData->data);
+        blocks_mode_private_data_write_to_channel(
+            data, (mretv & MENU_CUSTOM_ACTION) ? Event__SELECT_ENTRY_ALT : Event__SELECT_ENTRY,
+            lineData->text, lineData->data);
         retv = RELOAD_DIALOG;
     } else if ( ( mretv & MENU_ENTRY_DELETE ) == MENU_ENTRY_DELETE ) {
         if(selected_line >= pageData->lines->len){ return RELOAD_DIALOG; }
@@ -415,7 +423,9 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
         blocks_mode_private_data_write_to_channel(data, Event__DELETE_ENTRY, lineData->text, lineData->data);
         retv = RELOAD_DIALOG;
     } else if ( ( mretv & MENU_CUSTOM_INPUT ) ) {
-        blocks_mode_private_data_write_to_channel(data, Event__EXEC_CUSTOM_INPUT, *input, "");
+        blocks_mode_private_data_write_to_channel(
+            data, (mretv & MENU_CUSTOM_ACTION) ? Event__EXEC_CUSTOM_INPUT_ALT : Event__EXEC_CUSTOM_INPUT,
+            *input, "");
         retv = RELOAD_DIALOG;
     } else if ( ( mretv & MENU_COMPLETE ) ) {
         blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, "");
