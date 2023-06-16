@@ -15,7 +15,7 @@ done
 toLinesJson(){
 	echo "$1" | sed -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/.*/"&"/' | paste -sd "," -
 }
-echo '{"close on exit": false,"prompt":"filter args","message": "here shows the arguments passed when using -blocks-wrap argument as command line"  }'
+echo '{"close_on_exit": false,"prompt":"filter args","message": "here shows the arguments passed when using -blocks-wrap argument as command line"  }'
 log_action(){
 	JSON_LINES="$(toLinesJson "$ACTIONS")"
  	TEXT=$(cat <<EOF | tr -d "\n" | tr -d "\t"

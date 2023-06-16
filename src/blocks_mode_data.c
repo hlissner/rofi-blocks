@@ -29,7 +29,7 @@ BlocksModePrivateData * blocks_mode_private_data_new(){
     BlocksModePrivateData *pd = g_malloc0 ( sizeof ( *pd ) );
     pd->currentPageData = page_data_new();
     pd->currentPageData->markup_default = MarkupStatus_UNDEFINED;
-    pd->input_format = g_string_new("{\"name\":\"{{name_enum}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
+    pd->input_format = g_string_new("{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
     pd->entry_to_focus = -1;
     pd->input_action = InputAction__FILTER_USING_ROFI;
     pd->close_on_child_exit = TRUE;
@@ -97,7 +97,7 @@ static void blocks_mode_private_data_update_string(BlocksModePrivateData * data,
 }
 
 static void blocks_mode_private_data_update_input_action(BlocksModePrivateData * data){
-    const gchar* input_action = json_object_get_string_member_or_else(data->root, "input action", NULL);
+    const gchar* input_action = json_object_get_string_member_or_else(data->root, "input_action", NULL);
     if(input_action != NULL){
         for (int i = 0; i < NUM_OF_INPUT_ACTIONS; ++i)
         {
@@ -132,16 +132,16 @@ static void blocks_mode_private_data_update_input(BlocksModePrivateData * data){
 }
 
 static void blocks_mode_private_data_update_input_format(BlocksModePrivateData * data){
-    blocks_mode_private_data_update_string(data, &data->input_format, "event format");
+    blocks_mode_private_data_update_string(data, &data->input_format, "event_format");
 }
 
 static void blocks_mode_private_data_update_focus_entry(BlocksModePrivateData * data){
-    data->entry_to_focus = json_object_get_int_member_or_else(data->root, "active entry", -1);
+    data->entry_to_focus = json_object_get_int_member_or_else(data->root, "active_entry", -1);
 }
 
 static void blocks_mode_private_data_update_close_on_child_exit(BlocksModePrivateData * data){
     gboolean orig = data->close_on_child_exit;
-    gboolean now = json_object_get_boolean_member_or_else(data->root, "close on exit" , orig);
+    gboolean now = json_object_get_boolean_member_or_else(data->root, "close_on_exit" , orig);
     data->close_on_child_exit = now;
 }
 

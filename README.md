@@ -81,9 +81,9 @@ The JSON format used to communicate with the modi is the one on the next figure,
   "overlay": "overlay text",
   "prompt": "prompt text",
   "input": "input text",
-  "input action": "input action, 'send' or 'filter'",
-  "event format": "event format",
-  "active entry": 3,
+  "input_action": "input action, 'send' or 'filter'",
+  "event_format": "event_format",
+  "active_entry": 3,
   "lines":[
     "one line is a line from input", 
     {"text":"can be a string or object"}, 
@@ -105,9 +105,9 @@ The JSON format used to communicate with the modi is the one on the next figure,
 | overlay      | Shows overlay with text, hides it if empty or null   |
 | prompt       | sets prompt text                                     |
 | input        | sets input text, to clear use empty string           |
-| input action | Sets input change action only two values are accepted, any other is ignored. <br> **filter***(default)*: rofi filters the content, no event is sent to program input <br> **send**: prevents rofi filter and sends an "*input change*" event to program input |
-| event format | event format used to send to input, more of it on next section |
-| active entry | entry to be focused/active: <br> - the first entry number is 0; <br> - a value equal or larger than the number of lines will focus the first one; <br> - negative or floating numbers are ignored.  |
+| input_action | Sets input change action only two values are accepted, any other is ignored. <br> **filter***(default)*: rofi filters the content, no event is sent to program input <br> **send**: prevents rofi filter and sends an "*input change*" event to program input |
+| event_format | event format used to send to input, more of it on next section |
+| active_entry | entry to be focused/active: <br> - the first entry number is 0; <br> - a value equal or larger than the number of lines will focus the first one; <br> - negative or floating numbers are ignored.  |
 | lines        | a list of sting or json object to set rofi list content, a string will show a text with all flags disabled.  |
 
 
@@ -125,39 +125,36 @@ The JSON format used to communicate with the modi is the one on the next figure,
 
 #### Input format
 
-The default format that the plugin uses to write events to the program is a json object. However, there are scripting languages that does not have a builtin json parser, *shell* is one of them. For that reason, the event format is configurable by setting the "*event format*" property on output. 
+rofi-blocks emits events in JSON, by default. This can be configured, by  the `event_format` property.
 
-The default format has the following text: 
+The default format is:
 ```json
-{"name":"{{name_escaped}}", "value":"{{value_escaped}}", "data":"{{data_escaped}}"}
+{"event":"{{event}}", "value":"{{value_escaped}}", "data":"{{data_escaped}}"}
 ```
 
-It contains some text wrapped with double braces {{}}. These wrapped text indicates a parameter that will be replaced by the plugin formatter. The following parameters are supported:
+Each {{parameter}} is replaced as per the table below:
+| Parameter     | Format              | Description                                                                                                                                                                                                                                               |
+|---------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| event         | `{{event}}`         | name of the event                                                                                                                                                                                                                                         |
+| value         | `{{value}}`         | information of the event: <br> - **entry text** on entry select or delete <br> - **input content** on input change, exec custom input, or complete <br> - **custom key number** on custom key typed                                                       |
+| value escaped | `{{value_escaped}}` | information of the event, escaped to be inserted on a json string                                                                                                                                                                                         |
+| data          | `{{data}}`          | additional data of the event: <br> - **entry metadata** on entry select or delete <br> - **"1"** on custom command or complete, indicating that an active entry event was emitted prior<br> - **empty sting** if entry has no metadata, or on other event |
+| data_escaped  | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string                                                                                                                                                                                    |
 
-| Parameter       | Format              | Description                                                               |
-|-----------------|---------------------|---------------------------------------------------------------------------|
-| name            | `{{name}}`          | name of the event                                                         |
-| name escaped    | `{{name_escaped}}`  | name of the event, escaped to be inserted on a json string                |
-| name as enum    | `{{name_enum}}`     | name of the event in all caps, separated by underscore for easier parsing |
-| value           | `{{value}}`         | information of the event: <br> - **entry text** on entry select or delete <br> - **input content** on input change, exec custom input, or complete <br> - **custom key number** on custom key typed |
-| value escaped   | `{{value_escaped}}` | information of the event, escaped to be inserted on a json string         |
-| data            | `{{data}}`          | additional data of the event: <br> - **entry metadata** on entry select or delete <br> - **"1"** on custom command or complete, indicating that an active entry event was emitted prior<br> - **empty sting** if entry has no metadata, or on other event  |
-| data_escaped    | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string    |
+##### Events:
 
-##### Event names:
-
-| Name                     | Name as enumerator    | Description                                                                                            |
-|--------------------------|-----------------------|--------------------------------------------------------------------------------------------------------|
-| input change             | INPUT_CHANGE          | when input changes and input action is set to `send`                                                   |
-| custom key               | CUSTOM_KEY            | when a custom key is typed, follows an `active entry` event if list isn't empty                        |
-| complete                 | COMPLETE              | when `kb-mode-complete` is typed                                                                       |
-| cancel                   | CANCEL                | when Rofi is aborted (typically with `kb-cancel`)                                                      |
-| active entry             | ACTIVE_ENTRY          | announces the currently selected entry in list, prior to a `custom key` or `complete` event            |
-| select entry             | SELECT_ENTRY          | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
-| select entry alt         | SELECT_ENTRY_ALT      | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
-| delete entry             | DELETE_ENTRY          | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
-| execute custom input     | EXEC_CUSTOM_INPUT     | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
-| execute custom input alt | EXEC_CUSTOM_INPUT_ALT | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+| Name                  | Value               | Data                        | Description                                                                                            |
+|-----------------------|---------------------|-----------------------------|--------------------------------------------------------------------------------------------------------|
+| INPUT_CHANGE          | new_input           | ""                          | when input changes and input action is set to `send`                                                   |
+| CUSTOM_KEY            | keycode (number)    | if active entry "1" else "" | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
+| COMPLETE              | current_input       | if active entry "1" else "" | when `kb-mode-complete` is typed                                                                       |
+| CANCEL                | ""                  | ""                          | when Rofi is aborted (typically with `kb-cancel`)                                                      |
+| ACTIVE_ENTRY          | selected entry text | selected entry data         | announces the currently selected entry in list, prior to a `custom key` or `complete` event            |
+| SELECT_ENTRY          | selected entry text | selected entry data         | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
+| SELECT_ENTRY_ALT      | selected entry text | selected entry data         | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
+| DELETE_ENTRY          | selected entry text | selected entry data         | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
+| EXEC_CUSTOM_INPUT     | current_input       | ""                          | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
+| EXEC_CUSTOM_INPUT_ALT | current_input       | ""                          | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
 
 > Details on Rofi keybinds are available [in the Rofi manual](https://github.com/davatorium/rofi/blob/next/doc/rofi-keys.5.markdown).
 

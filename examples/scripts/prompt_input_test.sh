@@ -20,12 +20,12 @@ toStringJson(){
 toLinesJson(){
 	echo "$1" | sed -e 's/\\/\\\\/g' -e 's/\"/\\"/g' -e 's/.*/"&"/' | paste -sd "," -
 }
-echo '{"event format": "{{name_enum}} {{value}}"}'
+echo '{"event_format": "{{event}} {{value}}"}'
 log_action(){
 	JSON_LINES="$(toLinesJson "$ACTIONS")"
  	TEXT=$(cat <<EOF | tr -d "\n" | tr -d "\t"
 {
-	"input action": "send",
+	"input_action": "send",
 	"message": "message",
 	"lines":[${JSON_LINES}]
 }
@@ -69,10 +69,10 @@ while read -r line; do
 			stdbuf -oL echo '{"overlay": "overlay"}'
 			;;
 		"SELECT_ENTRY filter by input" ) 
-			stdbuf -oL echo '{"input action": "filter"}'
+			stdbuf -oL echo '{"input_action": "filter"}'
 			;;
 		"SELECT_ENTRY do not filter by input" ) 
-			stdbuf -oL echo '{"input action": "send"}'
+			stdbuf -oL echo '{"input_action": "send"}'
 			;;
 
 	esac

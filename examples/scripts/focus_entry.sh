@@ -9,7 +9,7 @@ toLinesJson(){
 log_action(){
  	TEXT=$(cat <<EOF | tr -d "\n" | tr -d "\t"
 {
-	"event format": "{{name_enum}} {{data}}",
+	"event_format": "{{event}} {{data}}",
 	"prompt":"select an entry to focus to other entry",
 	"message": "select an entry to focus to other entry",
 	${FOCUS_ENTRY}
@@ -32,10 +32,10 @@ log_action
 
 while IFS= read -r line; do
 	case "$line" in
-		"SELECT_ENTRY 0"    ) FOCUS_ENTRY='"active entry": 0,'   ; log_action ;;
-		"SELECT_ENTRY 1"    ) FOCUS_ENTRY='"active entry": 1,'   ; log_action ;;
-		"SELECT_ENTRY 2"    ) FOCUS_ENTRY='"active entry": 2,'   ; log_action ;;
-		"SELECT_ENTRY 3"    ) FOCUS_ENTRY='"active entry": 3,'   ; log_action ;;
-		"SELECT_ENTRY 1000" ) FOCUS_ENTRY='"active entry": 1000,'; log_action ;;
+		"SELECT_ENTRY 0"    ) FOCUS_ENTRY='"ACTIVE_ENTRY": 0,'   ; log_action ;;
+		"SELECT_ENTRY 1"    ) FOCUS_ENTRY='"ACTIVE_ENTRY": 1,'   ; log_action ;;
+		"SELECT_ENTRY 2"    ) FOCUS_ENTRY='"ACTIVE_ENTRY": 2,'   ; log_action ;;
+		"SELECT_ENTRY 3"    ) FOCUS_ENTRY='"ACTIVE_ENTRY": 3,'   ; log_action ;;
+		"SELECT_ENTRY 1000" ) FOCUS_ENTRY='"ACTIVE_ENTRY": 1000,'; log_action ;;
 	esac
 done

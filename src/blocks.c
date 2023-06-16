@@ -70,19 +70,6 @@ static const char *event_enum_labels[] = {
     "CANCEL"
 };
 
-static const char *event_labels[] = {
-    "input change",
-    "custom key",
-    "active entry",
-    "select entry",
-    "select entry alt",
-    "delete entry",
-    "execute custom input",
-    "execute custom input alt",
-    "complete",
-    "cancel"
-};
-
 /**************
  rofi extension
 ****************/
@@ -111,11 +98,9 @@ void blocks_mode_private_data_write_to_channel ( BlocksModePrivateData * data, E
             return;
         }
         const gchar * format = data->input_format->str;
-        gchar * format_result = str_replace(format, "{{name}}", event_labels[event]);
-        format_result = str_replace_in(&format_result, "{{name_enum}}", event_enum_labels[event]);
+        gchar * format_result = str_replace(format, "{{event}}", event_enum_labels[event]);
         format_result = str_replace_in(&format_result, "{{value}}", action_value);
         format_result = str_replace_in(&format_result, "{{data}}", action_data);
-        format_result = str_replace_in_escaped(&format_result, "{{name_escaped}}", event_labels[event]);
         format_result = str_replace_in_escaped(&format_result, "{{value_escaped}}", action_value);
         format_result = str_replace_in_escaped(&format_result, "{{data_escaped}}", action_data);
         g_debug("sending event: %s", format_result);
@@ -336,7 +321,7 @@ static int blocks_mode_init ( Mode *sw )
                 char * cmd_escaped = str_new_escaped_for_json_string(cmd);
                 char * error_message_escaped = str_new_escaped_for_json_string(error->message);
                 snprintf(buffer, sizeof(buffer), 
-                    "{\"close on exit\": false, \"message\":\"Error loading %s:%s\"}\n", 
+                    "{\"close_on_exit\": false, \"message\":\"Error loading %s:%s\"}\n",
                     cmd_escaped,
                     error_message_escaped
                 );

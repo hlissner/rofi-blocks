@@ -1,7 +1,7 @@
 #!/bin/bash
  
 ACTIONS=""
-default_custom_format="{{name_enum}} {{value}}"
+default_custom_format="{{event}} {{value}}"
 custom_format="${format:-$default_custom_format}"
 
 toStringJson(){
@@ -14,15 +14,13 @@ toLinesJson(){
 
 TEXT=$(cat <<EOF | tr -d "\n" | tr -d "\t"
 {
-	"input action":"send",
+	"input_action":"send",
 	"prompt":"updating input also logs action",
-	"event format":"${custom_format}",
-	"message": "Same as action logger but with different event format \n
+	"event_format":"${custom_format}",
+	"message": "Same as action logger but with different event_format \n
 		the format used is \"${custom_format}\" \n
 		valid parameters: \n
-		 {{name}} - event name in readable format\n
-		 {{name_enum}} - event name in enumerated format\n
-		 {{name_escaped}} - event name in readable format, escaped to work on a json string\n
+		 {{event}} - event name, e.g. SELECT_ENTRY\n
 		 {{value}} - event related information\n
 		 {{value_escaped}} - event related information, escaped to work on a json string\n
 		 \n

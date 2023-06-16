@@ -40,7 +40,7 @@ sort_column_set(){
 }
 echo "%CPU desc" > $tmp_dir/sort
 
-echo '{"event format": "{{name_enum}} {{value}}"}'
+echo '{"event_format": "{{event}} {{value}}"}'
 
 IFS=
 
@@ -165,7 +165,7 @@ while read -r line; do
 		"SELECT_ENTRY return" ) selected_pid_clear;;
 		"SELECT_ENTRY terminate (send SIGTERM signal)" ) kill -s SIGTERM "$(selected_pid_get)"; selected_pid_clear;;
 		"SELECT_ENTRY kill (send SIGKILL signal)" ) kill -s SIGKILL "$(selected_pid_get)"; selected_pid_clear;;
-		SELECT_ENTRY* ) ACTIVE_ENTRY='"active entry": 0,'; selected_pid_set "$( tr -s " " <<< "$line" | cut -d" " -f2,2)";;
+		SELECT_ENTRY* ) ACTIVE_ENTRY='"ACTIVE_ENTRY": 0,'; selected_pid_set "$( tr -s " " <<< "$line" | cut -d" " -f2,2)";;
 
 	esac
 done
