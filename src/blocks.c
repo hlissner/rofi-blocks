@@ -389,49 +389,52 @@ static unsigned int blocks_mode_get_num_entries ( const Mode *sw )
 
 static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned int selected_line )
 {
-    ModeMode           retv  = MODE_EXIT;
     BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
     PageData * pageData = data->currentPageData;
-    if ( mretv & MENU_NEXT ) {
-        retv = NEXT_DIALOG;
-    } else if ( mretv & MENU_PREVIOUS ) {
-        retv = PREVIOUS_DIALOG;
-    } else if ( mretv & MENU_CUSTOM_COMMAND ) {
-        if(selected_line >= pageData->lines->len){ return RELOAD_DIALOG; }
 
-        retv = ( mretv & MENU_LOWER_MASK );
-        int custom_key = retv%20 + 1;
-        char str[8];
-        snprintf(str, 8, "%d", custom_key);
+    if (mretv & MENU_NEXT) {
+        return NEXT_DIALOG;
+    } else if (mretv & MENU_PREVIOUS) {
+        return PREVIOUS_DIALOG;
+    }
 
-        LineData * lineData = &g_array_index (pageData->lines, LineData, selected_line);
-        blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, lineData->text, lineData->data);
-        blocks_mode_private_data_write_to_channel(data, Event__CUSTOM_KEY, str, "");
+    LineData * lineData;
+    if (selected_line >= 0 && selected_line < pageData->lines->len) {
+        lineData = &g_array_index (pageData->lines, LineData, selected_line);
+    } else {
+        selected_line = -1;
+    }
 
-        retv = RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_OK ) ) {
-        if(selected_line >= pageData->lines->len){ return RELOAD_DIALOG; }
-        LineData * lineData = &g_array_index (pageData->lines, LineData, selected_line);
+    ModeMode retv = RELOAD_DIALOG;
+    if (mretv & MENU_CUSTOM_COMMAND) {
+        if (selected_line != -1) {
+            blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, lineData->text, lineData->data);
+            char keycode[8];
+            snprintf(keycode, 8, "%d", (mretv & MENU_LOWER_MASK)%20 + 1);
+            blocks_mode_private_data_write_to_channel(data, Event__CUSTOM_KEY, keycode, "");
+        }
+    } else if (mretv & MENU_COMPLETE) {
+        if (selected_line != -1) {
+            blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, lineData->text, lineData->data);
+        }
+        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, "");
+    } else if (mretv & MENU_OK) {
         if (lineData->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(
             data, (mretv & MENU_CUSTOM_ACTION) ? Event__SELECT_ENTRY_ALT : Event__SELECT_ENTRY,
             lineData->text, lineData->data);
-        retv = RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_ENTRY_DELETE ) == MENU_ENTRY_DELETE ) {
-        if(selected_line >= pageData->lines->len){ return RELOAD_DIALOG; }
-        LineData * lineData = &g_array_index (pageData->lines, LineData, selected_line);
+    } else if (mretv & MENU_ENTRY_DELETE) {
+        if (lineData->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(data, Event__DELETE_ENTRY, lineData->text, lineData->data);
-        retv = RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_CUSTOM_INPUT ) ) {
+    } else if (mretv & MENU_CUSTOM_INPUT) {
         blocks_mode_private_data_write_to_channel(
             data, (mretv & MENU_CUSTOM_ACTION) ? Event__EXEC_CUSTOM_INPUT_ALT : Event__EXEC_CUSTOM_INPUT,
             *input, "");
-        retv = RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_COMPLETE ) ) {
-        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, "");
-        retv = RELOAD_DIALOG;
-    } else if ( ( mretv & MENU_CANCEL ) ) {
+    } else if (mretv & MENU_CANCEL) {
         blocks_mode_private_data_write_to_channel(data, Event__CANCEL, "", "");
+        retv = MODE_EXIT;
+    } else {
+        retv = MODE_EXIT;
     }
     return retv;
 }
