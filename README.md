@@ -139,21 +139,27 @@ It contains some text wrapped with double braces {{}}. These wrapped text indica
 | name            | `{{name}}`          | name of the event                                                         |
 | name escaped    | `{{name_escaped}}`  | name of the event, escaped to be inserted on a json string                |
 | name as enum    | `{{name_enum}}`     | name of the event in all caps, separated by underscore for easier parsing |
-| value           | `{{value}}`         | information of the event: <br> - **entry text** on entry select or delete <br> - **input content** on input change or exec custom input <br> - **custom key number** on custom key typed |
+| value           | `{{value}}`         | information of the event: <br> - **entry text** on entry select or delete <br> - **input content** on input change, exec custom input, or complete <br> - **custom key number** on custom key typed |
 | value escaped   | `{{value_escaped}}` | information of the event, escaped to be inserted on a json string         |
-| data            | `{{data}}`          | additional data of the event: <br> - **entry metadata** on entry select or delete <br> - **empty sting** if entry has no metadata, or on other event  |
+| data            | `{{data}}`          | additional data of the event: <br> - **entry metadata** on entry select or delete <br> - **"1"** on custom command or complete, indicating that an active entry event was emitted prior<br> - **empty sting** if entry has no metadata, or on other event  |
 | data_escaped    | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string    |
 
 ##### Event names:
 
-| Name                   | Name as enumerator | Description                                               |
-|------------------------|--------------------|-----------------------------------------------------------|
-| input change           | INPUT_CHANGE       | sent when input changes and input action is set to `send` |
-| custom key             | CUSTOM_KEY         | sent when a custom key is typed                           |
-| active entry           | ACTIVE_ENTRY       | sent before `custom key` event is emitted                 |
-| select entry           | SELECT_ENTRY       | sent when selecting an entry on the list                  |
-| delete entry           | DELETE_ENTRY       | sent when deleting an entry on the list                   |
-| execute custom input   | EXEC_CUSTOM_INPUT  | sent when a custom input is to be executed                |
+| Name                     | Name as enumerator    | Description                                                                                            |
+|--------------------------|-----------------------|--------------------------------------------------------------------------------------------------------|
+| input change             | INPUT_CHANGE          | when input changes and input action is set to `send`                                                   |
+| custom key               | CUSTOM_KEY            | when a custom key is typed, follows an `active entry` event if list isn't empty                        |
+| complete                 | COMPLETE              | when `kb-mode-complete` is typed                                                                       |
+| cancel                   | CANCEL                | when Rofi is aborted (typically with `kb-cancel`)                                                      |
+| active entry             | ACTIVE_ENTRY          | announces the currently selected entry in list, prior to a `custom key` or `complete` event            |
+| select entry             | SELECT_ENTRY          | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
+| select entry alt         | SELECT_ENTRY_ALT      | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
+| delete entry             | DELETE_ENTRY          | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
+| execute custom input     | EXEC_CUSTOM_INPUT     | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
+| execute custom input alt | EXEC_CUSTOM_INPUT_ALT | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+
+> Details on Rofi keybinds are available [in the Rofi manual](https://github.com/davatorium/rofi/blob/next/doc/rofi-keys.5.markdown).
 
 
 ### Examples
