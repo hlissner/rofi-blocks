@@ -8,10 +8,10 @@ Run rofi like:
 
 ```bash
 rofi -modi blocks -show blocks
-```
-or
-```bash
-rofi -modi blocks -show blocks -blocks-wrap /path/to/program
+     [ -blocks-wrap /path/to/program ]
+     [ -blocks-prompt "Initial prompt text" ]
+     [ -event-format '{"event":"{{event}}", "value":"{{value_escaped}}", "data":"{{data_escaped}}"}' ]
+     [ -markup-rows ]
 ```
 
 ### Dependencies

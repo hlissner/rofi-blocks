@@ -41,6 +41,7 @@ G_MODULE_EXPORT Mode mode;
 const gchar* CmdArg__BLOCKS_WRAP = "-blocks-wrap";
 const gchar* CmdArg__BLOCKS_PROMPT = "-blocks-prompt";
 const gchar* CmdArg__MARKUP_ROWS = "-markup-rows";
+const gchar* CmdArg__EVENT_FORMAT = "-event-format";
 
 static const gchar* EMPTY_STRING = "";
 
@@ -293,6 +294,12 @@ static int blocks_mode_init ( Mode *sw )
     if ( mode_get_private_data ( sw ) == NULL ) {
         BlocksModePrivateData *pd = blocks_mode_private_data_new();
         mode_set_private_data ( sw, (void *) pd );
+
+        char *format = NULL
+        if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
+            pd->input_format = g_strdup ( format );
+        }
+
         char *cmd = NULL;
         if (find_arg_str(CmdArg__MARKUP_ROWS, &cmd)) {
             pd->currentPageData->markup_default = MarkupStatus_ENABLED;
