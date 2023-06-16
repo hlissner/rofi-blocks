@@ -50,7 +50,9 @@ typedef enum {
     Event__ACTIVE_ENTRY,
     Event__SELECT_ENTRY, 
     Event__DELETE_ENTRY, 
-    Event__EXEC_CUSTOM_INPUT
+    Event__EXEC_CUSTOM_INPUT,
+    Event__COMPLETE,
+    Event__CANCEL
 } Event;
 
 static const char *event_enum_labels[] = {
@@ -59,7 +61,9 @@ static const char *event_enum_labels[] = {
     "ACTIVE_ENTRY", 
     "SELECT_ENTRY", 
     "DELETE_ENTRY", 
-    "EXEC_CUSTOM_INPUT"
+    "EXEC_CUSTOM_INPUT",
+    "COMPLETE",
+    "CANCEL"
 };
 
 static const char *event_labels[] = {
@@ -68,7 +72,9 @@ static const char *event_labels[] = {
     "active entry",
     "select entry",
     "delete entry",
-    "execute custom input"
+    "execute custom input",
+    "complete",
+    "cancel"
 };
 
 /**************
@@ -411,6 +417,11 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
     } else if ( ( mretv & MENU_CUSTOM_INPUT ) ) {
         blocks_mode_private_data_write_to_channel(data, Event__EXEC_CUSTOM_INPUT, *input, "");
         retv = RELOAD_DIALOG;
+    } else if ( ( mretv & MENU_COMPLETE ) ) {
+        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, "");
+        retv = RELOAD_DIALOG;
+    } else if ( ( mretv & MENU_CANCEL ) ) {
+        blocks_mode_private_data_write_to_channel(data, Event__CANCEL, "", "");
     }
     return retv;
 }
