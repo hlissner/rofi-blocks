@@ -296,15 +296,14 @@ static int blocks_mode_init ( Mode *sw )
         BlocksModePrivateData *pd = blocks_mode_private_data_new();
         mode_set_private_data ( sw, (void *) pd );
 
-        char *format = NULL
+        char *format = NULL;
         if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
             pd->input_format = g_strdup ( format );
         }
 
-        char *action = NULL
+        char *action = NULL;
         if (find_arg_str(CmdArg__INPUT_ACTION, &action)) {
-            for (int i = 0; i < NUM_OF_INPUT_ACTIONS; ++i)
-            {
+            for (int i = 0; i < 2; ++i) {
                 if(g_strcmp0(action, input_action_names[i]) == 0){
                     pd->input_action = (InputAction) i;
                 }
