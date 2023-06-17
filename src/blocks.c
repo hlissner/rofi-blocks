@@ -42,6 +42,7 @@ const gchar* CmdArg__BLOCKS_WRAP = "-blocks-wrap";
 const gchar* CmdArg__BLOCKS_PROMPT = "-blocks-prompt";
 const gchar* CmdArg__MARKUP_ROWS = "-markup-rows";
 const gchar* CmdArg__EVENT_FORMAT = "-event-format";
+const gchar* CmdArg__INPUT_ACTION = "-input-action";
 
 static const gchar* EMPTY_STRING = "";
 
@@ -298,6 +299,16 @@ static int blocks_mode_init ( Mode *sw )
         char *format = NULL
         if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
             pd->input_format = g_strdup ( format );
+        }
+
+        char *action = NULL
+        if (find_arg_str(CmdArg__INPUT_ACTION, &action)) {
+            for (int i = 0; i < NUM_OF_INPUT_ACTIONS; ++i)
+            {
+                if(g_strcmp0(action, input_action_names[i]) == 0){
+                    pd->input_action = (InputAction) i;
+                }
+            }
         }
 
         char *cmd = NULL;

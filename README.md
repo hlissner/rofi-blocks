@@ -11,6 +11,7 @@ rofi -modi blocks -show blocks
      [ -blocks-wrap /path/to/program ]
      [ -blocks-prompt "Initial prompt text" ]
      [ -event-format '{"event":"{{event}}", "value":"{{value_escaped}}", "data":"{{data_escaped}}"}' ]
+     [ -input-action send|filter ]
      [ -markup-rows ]
 ```
 
