@@ -501,7 +501,15 @@ static int blocks_mode_token_match ( const Mode *sw, rofi_int_matcher **tokens, 
     if(data->input_action == InputAction__SEND_ACTION){
         return TRUE;
     }
-    return helper_token_match ( tokens, lineData->text);
+
+    // Strip out markup when matching
+    char *esc = NULL;
+    if (lineData->markup) {
+        pango_parse_markup(lineData->text, -1, 0, NULL, &esc, NULL, NULL);
+    } else {
+        esc = lineData->text;
+    }
+    return helper_token_match(tokens, esc);
 }
 
 static char * blocks_mode_get_message ( const Mode *sw )
