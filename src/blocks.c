@@ -24,6 +24,8 @@
 #include "json_glib_extensions.h"
 #include "blocks_mode_data.h"
 
+#include <pango/pango.h>
+
 typedef struct RofiViewState RofiViewState;
 void rofi_view_switch_mode ( RofiViewState *state, Mode *mode );
 RofiViewState * rofi_view_get_active ( void );
