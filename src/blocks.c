@@ -143,43 +143,37 @@ static PageData * mode_get_private_data_current_page(const Mode *sw){
  main loop sources
 ********************/
 
-// GIOChannel watch, called when there is output to read from child proccess 
-static gboolean on_new_input ( GIOChannel *source, GIOCondition condition, gpointer context )
-{
-    Mode *sw = (Mode *) context;
-    RofiViewState * state = rofi_view_get_active();
-
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-
+static gboolean next_line(BlocksModePrivateData *data, GIOChannel *source, GIOCondition condition, gpointer context) {
     GString * buffer = data->buffer;
     GString * active_line = data->active_line;
-
-    gboolean newline = FALSE;
-
     GError * error = NULL;
     gunichar unichar;
-    GIOStatus status;
+    GIOStatus status = g_io_channel_read_unichar(source, &unichar, &error);
 
-    status = g_io_channel_read_unichar(source, &unichar, &error);
-
-    //when there is nothing to read, status is G_IO_STATUS_AGAIN
+    // when there is nothing to read, status is G_IO_STATUS_AGAIN
     while(status == G_IO_STATUS_NORMAL) {
         g_string_append_unichar(buffer, unichar);
-        if( unichar == '\n' ){
-            if(buffer->len > 1){ //input is not an empty line
-                if(newline){
-                    g_debug("previous line ignored since a new line is received");
-                }
+        if (unichar == '\n') {
+            if (buffer->len > 1) { //input is not an empty line
                 g_debug("received new line: %s", buffer->str);
                 g_string_assign(active_line, buffer->str);
-                newline=TRUE;
             }
             g_string_set_size(buffer, 0);
+            return TRUE;
         }
         status = g_io_channel_read_unichar(source, &unichar, &error);
     }
+    return FALSE;
+}
 
-    if(newline){
+// GIOChannel watch, called when there is output to read from child proccess
+static gboolean on_new_input(GIOChannel *source, GIOCondition condition, gpointer context )
+{
+    Mode *sw = (Mode *) context;
+    RofiViewState * state = rofi_view_get_active();
+    BlocksModePrivateData *data = mode_get_private_data_extended_mode(sw);
+
+    while (next_line(data, source, condition, context)) {
         g_debug("handling received line");
 
         GString * oldOverlay = g_string_new(page_data_get_overlay_or_empty_string(data->currentPageData));
