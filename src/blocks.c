@@ -243,7 +243,7 @@ static gboolean on_new_input ( GIOChannel *source, GIOCondition condition, gpoin
 static void on_child_status (GPid pid, gint status, gpointer context)
 {
     g_message ("Child %" G_PID_FORMAT " exited %s", pid,
-        g_spawn_check_exit_status (status, NULL) ? "normally" : "abnormally");
+        g_spawn_check_wait_status (status, NULL) ? "normally" : "abnormally");
     Mode *sw = (Mode *) context;
     BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
     g_spawn_close_pid (pid);
