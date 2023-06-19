@@ -49,6 +49,7 @@ const gchar* CmdArg__INPUT_ACTION = "-input-action";
 static const gchar* EMPTY_STRING = "";
 
 typedef enum {
+    Event__INIT,
     Event__INPUT_CHANGE,
     Event__CUSTOM_KEY,
     Event__ACTIVE_ENTRY,
@@ -62,6 +63,7 @@ typedef enum {
 } Event;
 
 static const char *event_enum_labels[] = {
+    "INIT",
     "INPUT_CHANGE",
     "CUSTOM_KEY",
     "ACTIVE_ENTRY",
@@ -367,6 +369,11 @@ static int blocks_mode_init ( Mode *sw )
         }
 
         pd->read_channel_watcher = g_io_add_watch(pd->read_channel, G_IO_IN, on_new_input, sw);
+
+        char abi[8];
+        snprintf(abi, 8, "%d", ABI_VERSION);
+        // TODO: Read version dynamically
+        blocks_mode_private_data_write_to_channel(pd, Event__INIT, "0.1.0", abi);
     }
     return TRUE;
 }
