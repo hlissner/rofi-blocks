@@ -34,6 +34,14 @@ static const char * get_page_data_string_member_or_empty_string(GString *string_
 static void set_page_data_string_member(GString **string_member, const char * new_string);
 
 
+gboolean page_data_is_string_equal(GString *a, GString *b) {
+    if (a == NULL && b == NULL) {
+        return TRUE;
+    } else if (a != NULL && b != NULL) {
+        return g_string_equal(a, b);
+    }
+    return FALSE;
+}
 
 gboolean page_data_is_message_empty(PageData * pageData){
     return pageData == NULL ? TRUE : is_page_data_string_member_empty(pageData->message);

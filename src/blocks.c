@@ -176,54 +176,46 @@ static gboolean on_new_input(GIOChannel *source, GIOCondition condition, gpointe
     while (next_line(data, source, condition, context)) {
         g_debug("handling received line");
 
-        GString * oldOverlay = g_string_new(page_data_get_overlay_or_empty_string(data->currentPageData));
+        GString * overlay = data->currentPageData->overlay;
         GString * prompt = data->currentPageData->prompt;
         GString * input = data->currentPageData->input;
 
-        GString * oldPrompt = prompt == NULL ? NULL : g_string_new(prompt->str);
-        GString * oldInput = input == NULL ? NULL : g_string_new(input->str);
+        GString * oldOverlay = overlay ? g_string_new(overlay->str) : NULL;
+        GString * oldPrompt = prompt ? g_string_new(prompt->str) : NULL;
+        GString * oldInput = input ? g_string_new(input->str) : NULL;
 
         blocks_mode_private_data_update_page(data);
-        
-        GString * newOverlay = g_string_new(page_data_get_overlay_or_empty_string(data->currentPageData));
+        GString * newOverlay = data->currentPageData->overlay;
         GString * newPrompt = data->currentPageData->prompt;
         GString * newInput = data->currentPageData->input;
-        gint64 entry_to_focus = data->entry_to_focus;
 
-        bool overlayChanged = !g_string_equal(oldOverlay, newOverlay);
-        bool promptChanged = newPrompt != NULL && (oldPrompt == NULL || !g_string_equal(oldPrompt, newPrompt));
-        bool inputChanged = newInput != NULL && (oldInput == NULL || !g_string_equal(oldInput, newInput));
-        bool willFocusToEntry = entry_to_focus >= 0;
-
-
-        if(overlayChanged){
+        if(!page_data_is_string_equal(oldOverlay, newOverlay)){
             RofiViewState * state = rofi_view_get_active();
             rofi_view_set_overlay(state, (newOverlay->len > 0) ? newOverlay->str : NULL);
         }
 
-        if(promptChanged){
+        if(!page_data_is_string_equal(oldPrompt, newPrompt)){
             g_free ( sw->display_name );
-            sw->display_name = g_strdup ( newPrompt->str );
+            sw->display_name = g_strdup(newPrompt->str);
             // rofi_view_reload does not update prompt, that is why this is needed
             rofi_view_switch_mode ( state, sw );
         }
 
-        if(inputChanged){
+        if(!page_data_is_string_equal(oldInput, newInput)){
             RofiViewState * rofiViewState = rofi_view_get_active();
             rofi_view_clear_input(rofiViewState);
             rofi_view_handle_text(rofiViewState, newInput->str);
         }
 
-        if(willFocusToEntry){
+        if(data->entry_to_focus >= 0){
             RofiViewState * rofiViewState = rofi_view_get_active();
-            g_debug("entry_to_focus %li", entry_to_focus);
-            rofi_view_set_selected_line(rofiViewState, (unsigned int) entry_to_focus);
+            g_debug("entry_to_focus %li", data->entry_to_focus);
+            rofi_view_set_selected_line(rofiViewState, (unsigned int) data->entry_to_focus);
         }
 
-        g_string_free(oldOverlay, TRUE);
-        g_string_free(newOverlay, TRUE);
-        oldPrompt != NULL && g_string_free(oldPrompt, TRUE);
-        oldInput != NULL && g_string_free(oldInput, TRUE);
+        oldOverlay && g_string_free(oldOverlay, TRUE);
+        oldPrompt && g_string_free(oldPrompt, TRUE);
+        oldInput && g_string_free(oldInput, TRUE);
 
         g_debug("reloading rofi view");
 
