@@ -1,40 +1,55 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2020 Omar Castro
-
-
 #include "json_glib_extensions.h"
 #include "page_data.h"
 
 static const gchar* EMPTY_STRING = "";
 
-PageData * page_data_new(){
-    PageData * pageData = g_malloc0( sizeof ( *pageData ) );
-    pageData->message = NULL;
-    pageData->overlay = NULL;
-    pageData->prompt = NULL;
-    pageData->input = g_string_sized_new(256);
-    pageData->lines = g_array_new (FALSE, TRUE, sizeof (LineData));
-    return pageData;
+PageData* page_data_new() {
+    PageData* page = g_malloc0(sizeof(*page));
+    page->message = NULL;
+    page->overlay = NULL;
+    page->prompt = NULL;
+    page->input = g_string_sized_new(256);
+    page->lines = g_array_new(FALSE, TRUE, sizeof(LineData));
+    return page;
 }
 
-void page_data_destroy(PageData * pageData){
-    page_data_clear_lines(pageData);
-    pageData->message != NULL && g_string_free(pageData->message, TRUE);
-    pageData->overlay != NULL && g_string_free(pageData->overlay, TRUE);
-    pageData->prompt != NULL && g_string_free(pageData->prompt, TRUE);
-    g_string_free(pageData->input, TRUE);
-    g_array_free (pageData->lines, TRUE);
-    g_free(pageData);
+void page_data_destroy(PageData* page) {
+    page_data_clear_lines(page);
+    page->message != NULL && g_string_free(page->message, TRUE);
+    page->overlay != NULL && g_string_free(page->overlay, TRUE);
+    page->prompt != NULL && g_string_free(page->prompt, TRUE);
+    g_string_free(page->input, TRUE);
+    g_array_free(page->lines, TRUE);
+    g_free(page);
 }
 
 
+static gboolean is_page_data_string_member_empty(GString* member) {
+    return member == NULL || member->len <= 0;
+}
 
-static gboolean is_page_data_string_member_empty(GString *string_member);
-static const char * get_page_data_string_member_or_empty_string(GString *string_member);
-static void set_page_data_string_member(GString **string_member, const char * new_string);
+static const char* get_page_data_string_member_or_empty_string(GString* member) {
+    return member == NULL ? EMPTY_STRING : member->str;
+}
+
+static void set_page_data_string_member(GString** member, const char* new_string) {
+    gboolean isDefined = *member != NULL;
+    gboolean willDefine = new_string != NULL;
+    if (isDefined && willDefine) {
+        g_string_assign(*member, new_string);
+    } else if (isDefined && !willDefine) {
+        g_string_free(*member, TRUE);
+        *member = NULL;
+    } else if (!isDefined && willDefine) {
+        *member = g_string_new(new_string);
+    }
+    // else do nothing, *member is already NULL
+}
 
 
-gboolean page_data_is_string_equal(GString *a, GString *b) {
+gboolean page_data_is_string_equal(GString* a, GString* b) {
     if (a == NULL && b == NULL) {
         return TRUE;
     } else if (a != NULL && b != NULL) {
@@ -43,48 +58,53 @@ gboolean page_data_is_string_equal(GString *a, GString *b) {
     return FALSE;
 }
 
-gboolean page_data_is_message_empty(PageData * pageData){
-    return pageData == NULL ? TRUE : is_page_data_string_member_empty(pageData->message);
+gboolean page_data_is_message_empty(PageData* page) {
+    return page ? is_page_data_string_member_empty(page->message) : TRUE;
 }
 
-const char * page_data_get_message_or_empty_string(PageData * pageData){
-    return pageData == NULL ? EMPTY_STRING : get_page_data_string_member_or_empty_string(pageData->message);
+const char* page_data_get_message_or_empty_string(PageData* page) {
+    return page ? get_page_data_string_member_or_empty_string(page->message) : EMPTY_STRING;
 }
 
-void page_data_set_message(PageData * pageData, const char * message){
-    set_page_data_string_member(&pageData->message, message);
+void page_data_set_message(PageData* page, const char* message) {
+    set_page_data_string_member(&page->message, message);
 }
 
-gboolean page_data_is_overlay_empty(PageData * pageData){
-    return pageData == NULL ? TRUE : is_page_data_string_member_empty(pageData->overlay);
+gboolean page_data_is_overlay_empty(PageData* page) {
+    return page ? is_page_data_string_member_empty(page->overlay) : TRUE;
 }
 
-const char * page_data_get_overlay_or_empty_string(PageData * pageData){
-    return pageData == NULL ? EMPTY_STRING : get_page_data_string_member_or_empty_string(pageData->overlay);
+const char* page_data_get_overlay_or_empty_string(PageData* page) {
+    return page ? get_page_data_string_member_or_empty_string(page->overlay) : EMPTY_STRING;
 }
 
-void page_data_set_overlay(PageData * pageData, const char * overlay){
-    set_page_data_string_member(&pageData->overlay, overlay);
-}
-
-
-
-
-size_t page_data_get_number_of_lines(PageData * pageData){
-    return pageData->lines->len;
+void page_data_set_overlay(PageData* page, const char* overlay) {
+    set_page_data_string_member(&page->overlay, overlay);
 }
 
 
-LineData * page_data_get_line_by_index_or_else(PageData * pageData, unsigned int index, LineData * elseValue){
-    if(pageData == NULL || index >= pageData->lines->len){
-        return elseValue;
+
+size_t page_data_get_number_of_lines(PageData* page) {
+    return page->lines->len;
+}
+
+LineData* page_data_get_line_by_index_or_else(PageData* page, unsigned int index, LineData* else_value) {
+    if (page == NULL || index >= page->lines->len) {
+        return else_value;
     }
-    LineData * result = &g_array_index (pageData->lines, LineData, index);
+    LineData* result = &g_array_index(page->lines, LineData, index);
     return result;
 }
 
 
-void page_data_add_line(PageData * pageData, const gchar * label, const gchar * icon, const gchar * data, gboolean urgent, gboolean highlight, gboolean markup, gboolean nonselectable){
+void page_data_add_line(PageData* page,
+                        const gchar* label,
+                        const gchar* icon,
+                        const gchar* data,
+                        gboolean urgent,
+                        gboolean highlight,
+                        gboolean markup,
+                        gboolean nonselectable) {
     LineData line = {
         .text = g_strdup(label),
         .icon = g_strdup(icon),
@@ -94,59 +114,36 @@ void page_data_add_line(PageData * pageData, const gchar * label, const gchar * 
         .markup = markup,
         .nonselectable = nonselectable
     };
-    g_array_append_val(pageData->lines, line);
+    g_array_append_val(page->lines, line);
 }
 
-void page_data_add_line_json_node(PageData * pageData, JsonNode * element){
-    if(JSON_NODE_HOLDS_VALUE(element) && json_node_get_value_type(element) == G_TYPE_STRING){
-        page_data_add_line(pageData, json_node_get_string(element), EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, pageData->markup_default == MarkupStatus_ENABLED, FALSE);
-    } else if(JSON_NODE_HOLDS_OBJECT(element)){
-        JsonObject * line_obj = json_node_get_object(element);
-        const gchar * text = json_object_get_string_member_or_else(line_obj, "text", EMPTY_STRING);
-        const gchar * icon = json_object_get_string_member_or_else(line_obj, "icon", EMPTY_STRING);
-        const gchar * data = json_object_get_string_member_or_else(line_obj, "data", EMPTY_STRING);
+void page_data_add_line_json_node(PageData* page, JsonNode* node) {
+    if (JSON_NODE_HOLDS_VALUE(node) && json_node_get_value_type(node) == G_TYPE_STRING) {
+        page_data_add_line(page, json_node_get_string(node), EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, page->markup_default == MarkupStatus_ENABLED, FALSE);
+    } else if (JSON_NODE_HOLDS_OBJECT(node)) {
+        JsonObject* line_obj = json_node_get_object(node);
+        const gchar* text = json_object_get_string_member_or_else(line_obj, "text", EMPTY_STRING);
+        const gchar* icon = json_object_get_string_member_or_else(line_obj, "icon", EMPTY_STRING);
+        const gchar* data = json_object_get_string_member_or_else(line_obj, "data", EMPTY_STRING);
         gboolean urgent = json_object_get_boolean_member_or_else(line_obj, "urgent", FALSE);
         gboolean highlight = json_object_get_boolean_member_or_else(line_obj, "highlight", FALSE);
-        gboolean markup = json_object_get_boolean_member_or_else(line_obj, "markup", pageData->markup_default == MarkupStatus_ENABLED);
+        gboolean markup = json_object_get_boolean_member_or_else(line_obj, "markup", page->markup_default == MarkupStatus_ENABLED);
         gboolean nonselectable = json_object_get_boolean_member_or_else(line_obj, "nonselectable", FALSE);
-        page_data_add_line(pageData, text, icon, data, urgent, highlight, markup, nonselectable);
+        page_data_add_line(page, text, icon, data, urgent, highlight, markup, nonselectable);
     }
 }
 
-void page_data_clear_lines(PageData * pageData){
-    GArray * lines = pageData->lines;
-    int lines_length = lines->len;
-    for (int i = 0; i < lines_length; i++){
-        LineData line = g_array_index (lines, LineData, i);
+void page_data_clear_lines(PageData* page) {
+    GArray* lines = page->lines;
+    int size = lines->len;
+    for (int i = 0; i < size; ++i) {
+        LineData line = g_array_index(lines, LineData, i);
         g_free(line.text);
         g_free(line.icon);
         g_free(line.data);
     }
-    g_array_set_size(pageData->lines, 0);
+    g_array_set_size(page->lines, 0);
 }
 
 
 
-static gboolean is_page_data_string_member_empty(GString *string_member){
-    return string_member == NULL || string_member->len <= 0;
-}
-
-static const char * get_page_data_string_member_or_empty_string(GString *string_member){
-    return string_member == NULL ?  EMPTY_STRING : string_member->str;
-}
-
-static void set_page_data_string_member(GString **string_member, const char * new_string){
-    gboolean isDefined = *string_member != NULL;
-    gboolean willDefine = new_string != NULL;
-
-    if( isDefined && willDefine ){
-        g_string_assign(*string_member, new_string);
-    } else if( isDefined && !willDefine ){
-        g_string_free(*string_member, TRUE);
-        *string_member = NULL;
-    } else if ( !isDefined && willDefine ){
-        *string_member = g_string_new (new_string);
-    } 
-    //else do nothing, *string_member is already NULL
-
-}

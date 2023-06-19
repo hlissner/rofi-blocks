@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2020 Omar Castro
 
-#define G_LOG_DOMAIN    "BlocksMode"
-
+#define G_LOG_DOMAIN "BlocksMode"
 
 #include <sys/types.h>
 #include <signal.h>
@@ -15,6 +14,7 @@
 
 #include <glib-object.h>
 #include <json-glib/json-glib.h>
+#include <pango/pango.h>
 
 #include <stdint.h>
 
@@ -24,19 +24,18 @@
 #include "json_glib_extensions.h"
 #include "blocks_mode_data.h"
 
-#include <pango/pango.h>
 
 typedef struct RofiViewState RofiViewState;
-void rofi_view_switch_mode ( RofiViewState *state, Mode *mode );
-RofiViewState * rofi_view_get_active ( void );
-extern void rofi_view_set_overlay(RofiViewState * state, const char *text);
-extern void rofi_view_reload ( void );
-const char * rofi_view_get_user_input ( const RofiViewState *state );
-unsigned int rofi_view_get_selected_line ( const RofiViewState *state );
-void rofi_view_set_selected_line ( const RofiViewState *state, unsigned int selected_line );
-unsigned int rofi_view_get_next_position ( const RofiViewState *state );
-void rofi_view_handle_text ( RofiViewState *state, char *text );
-void rofi_view_clear_input ( RofiViewState *state );
+void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
+RofiViewState* rofi_view_get_active(void);
+extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
+extern void rofi_view_reload(void);
+const char* rofi_view_get_user_input(const RofiViewState* state);
+unsigned int rofi_view_get_selected_line(const RofiViewState* state);
+void rofi_view_set_selected_line(const RofiViewState* state, unsigned int selected_line);
+unsigned int rofi_view_get_next_position(const RofiViewState* state);
+void rofi_view_handle_text(RofiViewState* state, char* text);
+void rofi_view_clear_input(RofiViewState* state);
 G_MODULE_EXPORT Mode mode;
 
 
@@ -62,7 +61,7 @@ typedef enum {
     Event__CANCEL
 } Event;
 
-static const char *event_enum_labels[] = {
+static const char* event_enum_labels[] = {
     "INIT",
     "INPUT_CHANGE",
     "CUSTOM_KEY",
@@ -76,14 +75,15 @@ static const char *event_enum_labels[] = {
     "CANCEL"
 };
 
+
 /**************
  rofi extension
 ****************/
 
-unsigned int blocks_mode_rofi_view_get_current_position(RofiViewState * rofiViewState, PageData * pageData){
-    unsigned int next_position = rofi_view_get_next_position(rofiViewState);
-    unsigned int length = page_data_get_number_of_lines(pageData);
-    if(next_position <= 0 || next_position >= UINT32_MAX - 10) {
+unsigned int blocks_mode_rofi_view_get_current_position(RofiViewState* state, PageData* page){
+    unsigned int next_position = rofi_view_get_next_position(state);
+    unsigned int length = page_data_get_number_of_lines(page);
+    if (next_position <= 0 || next_position >= UINT32_MAX - 10) {
         return length - 1;
     } else {
         return next_position - 1;
@@ -95,60 +95,59 @@ unsigned int blocks_mode_rofi_view_get_current_position(RofiViewState * rofiView
   extended mode pirvate data methods
 **************************************/
 
-
-
-void blocks_mode_private_data_write_to_channel ( BlocksModePrivateData * data, Event event, const char * action_value, const char * action_data){
-        GIOChannel * write_channel = data->write_channel;
-        if(data->write_channel == NULL){
-            //gets here when the script exits or there was an error loading it
-            return;
-        }
-        const gchar * format = data->input_format->str;
-        gchar * format_result = str_replace(format, "{{event}}", event_enum_labels[event]);
-        format_result = str_replace_in(&format_result, "{{value}}", action_value);
-        format_result = str_replace_in(&format_result, "{{data}}", action_data);
-        format_result = str_replace_in_escaped(&format_result, "{{value_escaped}}", action_value);
-        format_result = str_replace_in_escaped(&format_result, "{{data_escaped}}", action_data);
-        g_debug("sending event: %s", format_result);
-        gsize bytes_witten;
-        g_io_channel_write_chars(write_channel, format_result, -1, &bytes_witten, &data->error);
-        g_io_channel_write_unichar(write_channel, '\n', &data->error);
-        g_io_channel_flush(write_channel, &data->error);
-        g_free(format_result);
+void blocks_mode_private_data_write_to_channel(BlocksModePrivateData* data, Event event, const char* action_value, const char* action_data) {
+    GIOChannel* write_channel = data->write_channel;
+    if (data->write_channel == NULL) {
+        // when script exits or errors while loading
+        return;
+    }
+    const gchar* format = data->input_format->str;
+    gchar* format_result = str_replace(format, "{{event}}", event_enum_labels[event]);
+    format_result = str_replace_in(&format_result, "{{value}}", action_value);
+    format_result = str_replace_in(&format_result, "{{data}}", action_data);
+    format_result = str_replace_in_escaped(&format_result, "{{value_escaped}}", action_value);
+    format_result = str_replace_in_escaped(&format_result, "{{data_escaped}}", action_data);
+    g_debug("sending event: %s", format_result);
+    gsize bytes_witten;
+    g_io_channel_write_chars(write_channel, format_result, -1, &bytes_witten, &data->error);
+    g_io_channel_write_unichar(write_channel, '\n', &data->error);
+    g_io_channel_flush(write_channel, &data->error);
+    g_free(format_result);
 }
 
-void blocks_mode_verify_input_change ( BlocksModePrivateData * data, const char * new_input_value){
-    PageData * pageData = data->currentPageData;
-    GString * inputStr = pageData->input;
-    bool inputChanged = g_strcmp0(inputStr->str, new_input_value) != 0;
-    if(inputChanged){
-        g_string_assign(inputStr, new_input_value);
-        if(data->input_action == InputAction__SEND_ACTION ){
-            blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input_value, "");
+void blocks_mode_verify_input_change(BlocksModePrivateData* data, const char* new_input) {
+    PageData* page = data->currentPageData;
+    GString* input = page->input;
+    if (g_strcmp0(input->str, new_input) != 0) {
+        g_string_assign(input, new_input);
+        if (data->input_action == InputAction__SEND_ACTION) {
+            blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input, "");
         }
     }
 }
+
 
 /**************************
   mode extension methods
 **************************/
 
-static BlocksModePrivateData * mode_get_private_data_extended_mode(const Mode *sw){
-    return (BlocksModePrivateData *) mode_get_private_data( sw );
+static BlocksModePrivateData* mode_get_private_data_extended_mode(const Mode* sw) {
+    return (BlocksModePrivateData*) mode_get_private_data(sw);
 }
 
-static PageData * mode_get_private_data_current_page(const Mode *sw){
-    return mode_get_private_data_extended_mode( sw )->currentPageData;
+static PageData* mode_get_private_data_current_page(const Mode* sw) {
+    return mode_get_private_data_extended_mode(sw)->currentPageData;
 }
+
 
 /*******************
  main loop sources
 ********************/
 
-static gboolean next_line(BlocksModePrivateData *data, GIOChannel *source, GIOCondition condition, gpointer context) {
-    GString * buffer = data->buffer;
-    GString * active_line = data->active_line;
-    GError * error = NULL;
+static gboolean next_line(BlocksModePrivateData* data, GIOChannel* source, GIOCondition condition, gpointer context) {
+    GString* buffer = data->buffer;
+    GString* active_line = data->active_line;
+    GError* error = NULL;
     gunichar unichar;
     GIOStatus status = g_io_channel_read_unichar(source, &unichar, &error);
 
@@ -169,58 +168,54 @@ static gboolean next_line(BlocksModePrivateData *data, GIOChannel *source, GIOCo
 }
 
 // GIOChannel watch, called when there is output to read from child proccess
-static gboolean on_new_input(GIOChannel *source, GIOCondition condition, gpointer context )
-{
-    Mode *sw = (Mode *) context;
-    RofiViewState * state = rofi_view_get_active();
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode(sw);
+static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointer context) {
+    Mode* sw = (Mode*) context;
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
 
     while (next_line(data, source, condition, context)) {
         g_debug("handling received line");
 
-        GString * overlay = data->currentPageData->overlay;
-        GString * prompt = data->currentPageData->prompt;
-        GString * input = data->currentPageData->input;
+        GString* overlay = data->currentPageData->overlay;
+        GString* prompt = data->currentPageData->prompt;
+        GString* input = data->currentPageData->input;
 
-        GString * oldOverlay = overlay ? g_string_new(overlay->str) : NULL;
-        GString * oldPrompt = prompt ? g_string_new(prompt->str) : NULL;
-        GString * oldInput = input ? g_string_new(input->str) : NULL;
+        GString* old_overlay = overlay ? g_string_new(overlay->str) : NULL;
+        GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
+        GString* old_input = input ? g_string_new(input->str) : NULL;
 
         blocks_mode_private_data_update_page(data);
-        GString * newOverlay = data->currentPageData->overlay;
-        GString * newPrompt = data->currentPageData->prompt;
-        GString * newInput = data->currentPageData->input;
 
-        if(!page_data_is_string_equal(oldOverlay, newOverlay)){
-            RofiViewState * state = rofi_view_get_active();
-            rofi_view_set_overlay(state, (newOverlay->len > 0) ? newOverlay->str : NULL);
+        GString* new_overlay = data->currentPageData->overlay;
+        GString* new_prompt = data->currentPageData->prompt;
+        GString* new_input = data->currentPageData->input;
+
+        RofiViewState* state = rofi_view_get_active();
+        if (!page_data_is_string_equal(old_overlay, new_overlay)) {
+            rofi_view_set_overlay(state, (new_overlay->len > 0) ? new_overlay->str : NULL);
         }
 
-        if(!page_data_is_string_equal(oldPrompt, newPrompt)){
-            g_free ( sw->display_name );
-            sw->display_name = g_strdup(newPrompt->str);
+        if (!page_data_is_string_equal(old_prompt, new_prompt)) {
+            g_free(sw->display_name);
+            sw->display_name = g_strdup(new_prompt->str);
             // rofi_view_reload does not update prompt, that is why this is needed
-            rofi_view_switch_mode ( state, sw );
+            rofi_view_switch_mode(state, sw);
         }
 
-        if(!page_data_is_string_equal(oldInput, newInput)){
-            RofiViewState * rofiViewState = rofi_view_get_active();
-            rofi_view_clear_input(rofiViewState);
-            rofi_view_handle_text(rofiViewState, newInput->str);
+        if (!page_data_is_string_equal(old_input, new_input)) {
+            rofi_view_clear_input(state);
+            rofi_view_handle_text(state, new_input->str);
         }
 
-        if(data->entry_to_focus >= 0){
-            RofiViewState * rofiViewState = rofi_view_get_active();
+        if (data->entry_to_focus >= 0) {
             g_debug("entry_to_focus %li", data->entry_to_focus);
-            rofi_view_set_selected_line(rofiViewState, (unsigned int) data->entry_to_focus);
+            rofi_view_set_selected_line(state, (unsigned int) data->entry_to_focus);
         }
 
-        oldOverlay && g_string_free(oldOverlay, TRUE);
-        oldPrompt && g_string_free(oldPrompt, TRUE);
-        oldInput && g_string_free(oldInput, TRUE);
+        old_overlay && g_string_free(old_overlay, TRUE);
+        old_prompt && g_string_free(old_prompt, TRUE);
+        old_input && g_string_free(old_input, TRUE);
 
         g_debug("reloading rofi view");
-
         rofi_view_reload();
     }
 
@@ -228,166 +223,159 @@ static gboolean on_new_input(GIOChannel *source, GIOCondition condition, gpointe
 }
 
 // spawn watch, called when child exited
-static void on_child_status (GPid pid, gint status, gpointer context)
-{
-    g_message ("Child %" G_PID_FORMAT " exited %s", pid,
-        g_spawn_check_wait_status (status, NULL) ? "normally" : "abnormally");
-    Mode *sw = (Mode *) context;
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    g_spawn_close_pid (pid);
+static void on_child_status(GPid pid, gint status, gpointer context) {
+    g_message("Child %" G_PID_FORMAT " exited %s", pid,
+              g_spawn_check_wait_status (status, NULL) ? "normally" : "abnormally");
+    Mode* sw = (Mode*) context;
+    BlocksModePrivateData *data = mode_get_private_data_extended_mode(sw);
+    g_spawn_close_pid(pid);
     data->write_channel = NULL;
-    if(data->close_on_child_exit){
-          exit(0);    
+    if (data->close_on_child_exit) {
+        exit(0);
     }
 }
 
 // idle, called after rendering
-static void on_render(gpointer context){
+static void on_render(gpointer context) {
     g_debug("%s", "calling on_render");
 
-    Mode *sw = (Mode *) context;
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    RofiViewState * rofiViewState = rofi_view_get_active();
+    Mode* sw = (Mode*) context;
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
+    RofiViewState* state = rofi_view_get_active();
 
     /**
-     *   Mode._preprocess_input is not called when input is empty,
-     * the only method called when the input changes to empty is blocks_mode_get_display_value
-     * which later this method is called, that is reason the following 3 lines are added.
+     * Mode._preprocess_input is not called when input is empty, the only method
+     * called when the input changes to empty is blocks_mode_get_display_value
+     * which later this method is called, that is reason the following 3 lines
+     * are added.
      */
-    if(rofiViewState != NULL){
-        blocks_mode_verify_input_change(data, rofi_view_get_user_input(rofiViewState));
-        g_debug("%s %i", "on_render.selected line", rofi_view_get_selected_line(rofiViewState));
-        g_debug("%s %i", "on_render.next pos", rofi_view_get_next_position(rofiViewState));
-        g_debug("%s %i", "on_render.active line", blocks_mode_rofi_view_get_current_position(rofiViewState, data->currentPageData));
+    if (state) {
+        blocks_mode_verify_input_change(data, rofi_view_get_user_input(state));
+        g_debug("%s %i", "on_render.selected line", rofi_view_get_selected_line(state));
+        g_debug("%s %i", "on_render.next pos", rofi_view_get_next_position(state));
+        g_debug("%s %i", "on_render.active line", blocks_mode_rofi_view_get_current_position(state, data->currentPageData));
     }
-
 }
 
 // function used on g_idle_add, it is here to guarantee that this is called once
 // each time the mode content is rendered
-static gboolean on_render_callback(gpointer context){
+static gboolean on_render_callback(gpointer context) {
     on_render(context);
-    Mode *sw = (Mode *) context;
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
+    Mode* sw = (Mode*) context;
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
     data->waiting_for_idle = FALSE;
     return FALSE;
 }
-
 
 
 /************************
  extended mode methods
 ***********************/
 
+static int blocks_mode_init(Mode* sw) {
+    if (mode_get_private_data(sw)) { return TRUE; }
 
-static int blocks_mode_init ( Mode *sw )
-{
-    if ( mode_get_private_data ( sw ) == NULL ) {
-        BlocksModePrivateData *pd = blocks_mode_private_data_new();
-        mode_set_private_data ( sw, (void *) pd );
+    BlocksModePrivateData* pd = blocks_mode_private_data_new();
+    mode_set_private_data(sw, (void*) pd);
 
-        char *format = NULL;
-        if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
-            pd->input_format = g_string_new(format);
-        }
-
-        char *action = NULL;
-        if (find_arg_str(CmdArg__INPUT_ACTION, &action)) {
-            for (int i = 0; i < 2; ++i) {
-                if(g_strcmp0(action, input_action_names[i]) == 0){
-                    pd->input_action = (InputAction) i;
-                }
-            }
-        }
-
-        char *cmd = NULL;
-        if (find_arg_str(CmdArg__MARKUP_ROWS, &cmd)) {
-            pd->currentPageData->markup_default = MarkupStatus_ENABLED;
-        }
-
-        char *prompt = NULL;
-        if (find_arg_str(CmdArg__BLOCKS_PROMPT, &prompt)) {
-            sw->display_name = g_strdup ( prompt );
-        }
-
-        if (find_arg_str(CmdArg__BLOCKS_WRAP, &cmd)) {
-            GError *error = NULL;
-            int cmd_input_fd;
-            int cmd_output_fd;
-            char **argv = NULL;
-            if ( !g_shell_parse_argv ( cmd, NULL, &argv, &error ) ){
-                fprintf(stderr, "Unable to parse cmdline options: %s\n", error->message);
-                g_error_free ( error );
-                return 0;
-            }
-
-            if ( ! g_spawn_async_with_pipes ( NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL, NULL, &(pd->cmd_pid), &(cmd_input_fd), &(cmd_output_fd), NULL, &error)) {
-                fprintf(stderr, "Unable to exec %s\n", error->message);
-                char buffer[1024];
-                int result = 4;
-                char * cmd_escaped = str_new_escaped_for_json_string(cmd);
-                char * error_message_escaped = str_new_escaped_for_json_string(error->message);
-                snprintf(buffer, sizeof(buffer), 
-                    "{\"close_on_exit\": false, \"message\":\"Error loading %s:%s\"}\n",
-                    cmd_escaped,
-                    error_message_escaped
-                );
-                fprintf(stderr, "message:  %s\n", buffer);
-
-                g_string_assign(pd->active_line, buffer);
-                blocks_mode_private_data_update_page(pd);
-                g_error_free ( error );
-                g_free(cmd_escaped);
-                g_free(error_message_escaped);
-                return TRUE;
-            }
-
-            g_strfreev(argv);
-
-            pd->read_channel_fd = cmd_output_fd;
-            pd->write_channel_fd = cmd_input_fd;
-
-            int retval = fcntl( pd->read_channel_fd, F_SETFL, fcntl(pd->read_channel_fd, F_GETFL) | O_NONBLOCK);
-            if (retval != 0){
-
-                fprintf(stderr,"Error setting non block on output pipe\n");
-                kill(pd->cmd_pid, SIGTERM);
-                exit(1);
-            }
-            pd->read_channel = g_io_channel_unix_new(pd->read_channel_fd);
-            pd->write_channel = g_io_channel_unix_new(pd->write_channel_fd);
-            g_child_watch_add (pd->cmd_pid, on_child_status, sw);
-
-        } else {
-            int retval = fcntl( STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) | O_NONBLOCK);
-            if (retval != 0){
-                fprintf(stderr,"Error setting non block on output pipe\n");
-                exit(1);
-            }
-            pd->read_channel = g_io_channel_unix_new(STDIN_FILENO);
-            pd->write_channel = g_io_channel_unix_new(STDOUT_FILENO);
-        }
-
-        pd->read_channel_watcher = g_io_add_watch(pd->read_channel, G_IO_IN, on_new_input, sw);
-
-        char abi[8];
-        snprintf(abi, 8, "%d", ABI_VERSION);
-        // TODO: Read version dynamically
-        blocks_mode_private_data_write_to_channel(pd, Event__INIT, "0.1.0", abi);
+    char* format = NULL;
+    if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
+        pd->input_format = g_string_new(format);
     }
+
+    char* action = NULL;
+    if (find_arg_str(CmdArg__INPUT_ACTION, &action)) {
+        for (int i = 0; i < 2; ++i) {
+            if(g_strcmp0(action, input_action_names[i]) == 0) {
+                pd->input_action = (InputAction) i;
+            }
+        }
+    }
+
+    char* cmd = NULL;
+    if (find_arg_str(CmdArg__MARKUP_ROWS, &cmd)) {
+        pd->currentPageData->markup_default = MarkupStatus_ENABLED;
+    }
+
+    char* prompt = NULL;
+    if (find_arg_str(CmdArg__BLOCKS_PROMPT, &prompt)) {
+        sw->display_name = g_strdup(prompt);
+    }
+
+    if (find_arg_str(CmdArg__BLOCKS_WRAP, &cmd)) {
+        GError* error = NULL;
+        int cmd_input_fd;
+        int cmd_output_fd;
+        char** argv = NULL;
+        if (!g_shell_parse_argv(cmd, NULL, &argv, &error)) {
+            fprintf(stderr, "Unable to parse cmdline options: %s\n", error->message);
+            g_error_free(error);
+            return 0;
+        }
+
+        if (!g_spawn_async_with_pipes(
+                NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH,
+                NULL, NULL, &(pd->cmd_pid), &(cmd_input_fd), &(cmd_output_fd), NULL,
+                &error)) {
+            fprintf(stderr, "Unable to exec %s\n", error->message);
+            char buffer[1024];
+            int result = 4;
+            char* cmd_escaped = str_new_escaped_for_json_string(cmd);
+            char* error_message_escaped = str_new_escaped_for_json_string(error->message);
+            snprintf(buffer, sizeof(buffer),
+                     "{\"close_on_exit\": false, \"message\":\"Error loading %s:%s\"}\n",
+                     cmd_escaped,
+                     error_message_escaped);
+            fprintf(stderr, "message:  %s\n", buffer);
+
+            g_string_assign(pd->active_line, buffer);
+            blocks_mode_private_data_update_page(pd);
+            g_error_free(error);
+            g_free(cmd_escaped);
+            g_free(error_message_escaped);
+            return TRUE;
+        }
+        g_strfreev(argv);
+
+        pd->read_channel_fd = cmd_output_fd;
+        pd->write_channel_fd = cmd_input_fd;
+
+        int retval = fcntl(pd->read_channel_fd, F_SETFL, fcntl(pd->read_channel_fd, F_GETFL) | O_NONBLOCK);
+        if (retval != 0) {
+            fprintf(stderr,"Error setting non block on output pipe\n");
+            kill(pd->cmd_pid, SIGTERM);
+            exit(1);
+        }
+        pd->read_channel = g_io_channel_unix_new(pd->read_channel_fd);
+        pd->write_channel = g_io_channel_unix_new(pd->write_channel_fd);
+        g_child_watch_add(pd->cmd_pid, on_child_status, sw);
+    } else {
+        int retval = fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) | O_NONBLOCK);
+        if (retval != 0) {
+            fprintf(stderr,"Error setting non block on output pipe\n");
+            exit(1);
+        }
+        pd->read_channel = g_io_channel_unix_new(STDIN_FILENO);
+        pd->write_channel = g_io_channel_unix_new(STDOUT_FILENO);
+    }
+
+    pd->read_channel_watcher = g_io_add_watch(pd->read_channel, G_IO_IN, on_new_input, sw);
+
+    char abi[8];
+    snprintf(abi, 8, "%d", ABI_VERSION);
+    // TODO: Read version dynamically
+    blocks_mode_private_data_write_to_channel(pd, Event__INIT, "0.1.0", abi);
     return TRUE;
 }
-static unsigned int blocks_mode_get_num_entries ( const Mode *sw )
-{
+
+static unsigned int blocks_mode_get_num_entries(const Mode* sw) {
     g_debug("%s", "blocks_mode_get_num_entries");
-    PageData * pageData = mode_get_private_data_current_page( sw );
-    return page_data_get_number_of_lines(pageData);
+    PageData* page = mode_get_private_data_current_page(sw);
+    return page_data_get_number_of_lines(page);
 }
 
-static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned int selected_line )
-{
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    PageData * pageData = data->currentPageData;
+static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned int selected_line) {
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
 
     if (mretv & MENU_NEXT) {
         return NEXT_DIALOG;
@@ -395,11 +383,12 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
         return PREVIOUS_DIALOG;
     }
 
-    LineData * lineData;
-    if (selected_line >= 0 && selected_line < pageData->lines->len) {
-        lineData = &g_array_index (pageData->lines, LineData, selected_line);
+    PageData* page = data->currentPageData;
+    LineData* line;
+    if (selected_line >= 0 && selected_line < page->lines->len) {
+        line = &g_array_index(page->lines, LineData, selected_line);
         if (mretv & (MENU_CUSTOM_COMMAND | MENU_COMPLETE)) {
-            blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, lineData->text, lineData->data);
+            blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, line->text, line->data);
         }
     } else {
         selected_line = -1;
@@ -413,13 +402,13 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
     } else if (mretv & MENU_COMPLETE) {
         blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, selected_line == -1 ? "" : "1");
     } else if (mretv & MENU_OK) {
-        if (lineData->nonselectable) { return RELOAD_DIALOG; }
+        if (line->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(
             data, (mretv & MENU_CUSTOM_ACTION) ? Event__SELECT_ENTRY_ALT : Event__SELECT_ENTRY,
-            lineData->text, lineData->data);
+            line->text, line->data);
     } else if (mretv & MENU_ENTRY_DELETE) {
-        if (lineData->nonselectable) { return RELOAD_DIALOG; }
-        blocks_mode_private_data_write_to_channel(data, Event__DELETE_ENTRY, lineData->text, lineData->data);
+        if (line->nonselectable) { return RELOAD_DIALOG; }
+        blocks_mode_private_data_write_to_channel(data, Event__DELETE_ENTRY, line->text, line->data);
     } else if (mretv & MENU_CUSTOM_INPUT) {
         blocks_mode_private_data_write_to_channel(
             data, (mretv & MENU_CUSTOM_ACTION) ? Event__EXEC_CUSTOM_INPUT_ALT : Event__EXEC_CUSTOM_INPUT,
@@ -433,98 +422,92 @@ static ModeMode blocks_mode_result ( Mode *sw, int mretv, char **input, unsigned
     return retv;
 }
 
-static void blocks_mode_destroy ( Mode *sw )
-{
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    if ( data != NULL ) {
+static void blocks_mode_destroy(Mode* sw) {
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
+    if (data != NULL) {
         blocks_mode_private_data_update_destroy(data);
-        mode_set_private_data ( sw, NULL );
+        mode_set_private_data(sw, NULL);
     }
 }
 
- static cairo_surface_t * blocks_mode_get_icon ( const Mode *sw, unsigned int selected_line, unsigned int height ){
-    PageData * pageData = mode_get_private_data_current_page( sw );
-    LineData * lineData = page_data_get_line_by_index_or_else(pageData, selected_line, NULL);
-    if(lineData == NULL){
+ static cairo_surface_t* blocks_mode_get_icon(const Mode* sw, unsigned int selected_line, unsigned int height) {
+    PageData* page = mode_get_private_data_current_page(sw);
+    LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
+    if (line == NULL) {
         return NULL;
     }
 
-    const gchar * icon = lineData->icon;
-    if(icon == NULL || icon[0] == '\0'){
+    const gchar* icon = line->icon;
+    if (icon == NULL || icon[0] == '\0') {
         return NULL;
     }
 
-    if(lineData->icon_fetch_uid <= 0){
-        lineData->icon_fetch_uid = rofi_icon_fetcher_query ( icon, height );
+    if (line->icon_fetch_uid <= 0) {
+        line->icon_fetch_uid = rofi_icon_fetcher_query(icon, height);
     } 
-    return rofi_icon_fetcher_get ( lineData->icon_fetch_uid );
+    return rofi_icon_fetcher_get(line->icon_fetch_uid);
  }
 
 
 
-static char * blocks_mode_get_display_value ( const Mode *sw, unsigned int selected_line, int *state, G_GNUC_UNUSED GList **attr_list, int get_entry )
-{
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    if(!data->waiting_for_idle){
+static char* blocks_mode_get_display_value(const Mode* sw, unsigned int selected_line, int* state, G_GNUC_UNUSED GList** attr_list, int get_entry) {
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
+    if (!data->waiting_for_idle) {
         data->waiting_for_idle = TRUE;
-        g_idle_add (on_render_callback, (void *) sw);
+        g_idle_add(on_render_callback, (void*) sw);
     }
 
-    PageData * pageData = mode_get_private_data_current_page( sw );
-    LineData * lineData = page_data_get_line_by_index_or_else(pageData, selected_line, NULL);
-    if(lineData == NULL){
+    PageData* page = mode_get_private_data_current_page(sw);
+    LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
+    if (line == NULL) {
         *state |= 16;
         return get_entry ? g_strdup("") : NULL;
     }
 
     *state |= 
-        1 * lineData->urgent +
-        2 * lineData->highlight +
-        8 * lineData->markup;
-    return get_entry ? g_strdup(lineData->text) : NULL;
+        1 * line->urgent +
+        2 * line->highlight +
+        8 * line->markup;
+    return get_entry ? g_strdup(line->text) : NULL;
 }
 
-static int blocks_mode_token_match ( const Mode *sw, rofi_int_matcher **tokens, unsigned int selected_line )
-{
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
-    PageData * pageData = data->currentPageData;
-    LineData * lineData = page_data_get_line_by_index_or_else(pageData, selected_line, NULL);
-    if(lineData == NULL){
+static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, unsigned int selected_line) {
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
+    PageData* page = data->currentPageData;
+    LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
+    if (line == NULL) {
         return FALSE;
     }
 
-    if(data->input_action == InputAction__SEND_ACTION){
+    if (data->input_action == InputAction__SEND_ACTION) {
         return TRUE;
     }
 
     // Strip out markup when matching
-    char *esc = NULL;
-    if (lineData->markup) {
-        pango_parse_markup(lineData->text, -1, 0, NULL, &esc, NULL, NULL);
+    char* esc = NULL;
+    if (line->markup) {
+        pango_parse_markup(line->text, -1, 0, NULL, &esc, NULL, NULL);
     } else {
-        esc = lineData->text;
+        esc = line->text;
     }
     return helper_token_match(tokens, esc);
 }
 
-static char * blocks_mode_get_message ( const Mode *sw )
-{
+static char* blocks_mode_get_message(const Mode* sw) {
     g_debug("%s", "blocks_mode_get_message");
-    PageData * pageData = mode_get_private_data_current_page( sw );
-    gchar* result = page_data_is_message_empty(pageData) ? NULL : g_strdup(page_data_get_message_or_empty_string(pageData));
+    PageData* page = mode_get_private_data_current_page(sw);
+    gchar* result = page_data_is_message_empty(page) ? NULL : g_strdup(page_data_get_message_or_empty_string(page));
     return result;
 }
 
-static char * blocks_mode_preprocess_input ( Mode *sw, const char *input )
-{
+static char* blocks_mode_preprocess_input(Mode* sw, const char* input) {
     g_debug("%s", "blocks_mode_preprocess_input");
-    BlocksModePrivateData *data = mode_get_private_data_extended_mode( sw );
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
     blocks_mode_verify_input_change(data, input);
     return g_strdup(input);
 }
 
-Mode mode =
-{
+Mode mode = {
     .abi_version        = ABI_VERSION,
     .name               = "blocks",
     .cfg_name_key       = "display-blocks",
