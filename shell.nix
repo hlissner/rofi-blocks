@@ -19,6 +19,9 @@ mkShell {
         sha256 = "0cwbrqr6b1abi5ib7jj97in3qz8gxlc3frw5yln61g2pvgd81qfc";
         fetchSubmodules = true;
       };
+      patches = [
+        ./patches/mode-selection-changed.patch
+      ];
     }))
     pango
     glib

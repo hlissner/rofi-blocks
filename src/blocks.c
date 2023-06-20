@@ -387,9 +387,9 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
     LineData* line;
     if (selected_line >= 0 && selected_line < page->lines->len) {
         line = &g_array_index(page->lines, LineData, selected_line);
-        if (mretv & (MENU_CUSTOM_COMMAND | MENU_COMPLETE)) {
-            blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, line->text, line->data);
-        }
+        /* if (mretv & (MENU_CUSTOM_COMMAND | MENU_COMPLETE)) { */
+        /*     blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, line->text, line->data); */
+        /* } */
     } else {
         selected_line = -1;
     }
@@ -507,6 +507,17 @@ static char* blocks_mode_preprocess_input(Mode* sw, const char* input) {
     return g_strdup(input);
 }
 
+static void blocks_mode_selection_changed(Mode* sw, unsigned int index, unsigned int relative_index) {
+    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
+    if (index == UINT_MAX) {
+        blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, "", "");
+    } else {
+        PageData* page = mode_get_private_data_current_page(sw);
+        LineData* line = page_data_get_line_by_index_or_else(page, index, NULL);
+        blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, line->text, line->data);
+    }
+}
+
 Mode mode = {
     .abi_version        = ABI_VERSION,
     .name               = "blocks",
@@ -520,6 +531,7 @@ Mode mode = {
     ._get_display_value = blocks_mode_get_display_value,
     ._get_message       = blocks_mode_get_message,
     ._get_completion    = NULL,
+    ._selection_changed = blocks_mode_selection_changed,
     ._preprocess_input  = blocks_mode_preprocess_input,
     .private_data       = NULL,
     .free               = NULL,

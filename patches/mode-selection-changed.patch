@@ -1,0 +1,101 @@
+diff --git a/include/mode-private.h b/include/mode-private.h
+index f7e13daa..f92082c8 100644
+--- a/include/mode-private.h
++++ b/include/mode-private.h
+@@ -155,6 +155,17 @@ typedef ModeMode (*_mode_result)(Mode *sw, int menu_retv, char **input,
+  */
+ typedef char *(*_mode_preprocess_input)(Mode *sw, const char *input);
+ 
++
++/**
++ * @param sw The #Mode pointer
++ * @param index The currently collected line
++ * @param active_row The index of the active screen row
++ *
++ * Announces a change in selected line.
++ */
++typedef void (*_mode_selection_changed)(Mode *sw, unsigned int index, unsigned int relative_index);
++
++
+ /**
+  * @param sw The #Mode pointer
+  *
+@@ -221,6 +232,8 @@ struct rofi_mode {
+   _mode_get_completion _get_completion;
+ 
+   _mode_preprocess_input _preprocess_input;
++  /** Announce changes to selected line. */
++  _mode_selection_changed _selection_changed;
+ 
+   _mode_get_message _get_message;
+ 
+diff --git a/include/mode.h b/include/mode.h
+index 55ef750d..332350b1 100644
+--- a/include/mode.h
++++ b/include/mode.h
+@@ -238,6 +238,16 @@ void mode_set_config(Mode *mode);
+  */
+ char *mode_preprocess_input(Mode *mode, const char *input);
+ 
++/**
++ * @param mode The mode to query
++ * @param absolute_index The index of the selected row (relative to all lines).
++ * @param relative_index The index of the selected row on screen.
++ *
++ * Announces a change in selected row. If relative_index is -1 (e.g. when list
++ * is empty), absolute_index is invalid.
++ */
++void mode_selection_changed(Mode *mode, unsigned int index, unsigned int relative_index);
++
+ /**
+  * @param mode The mode to query
+  *
+diff --git a/source/mode.c b/source/mode.c
+index 7cb070de..9432f853 100644
+--- a/source/mode.c
++++ b/source/mode.c
+@@ -210,6 +210,13 @@ char *mode_preprocess_input(Mode *mode, const char *input) {
+   }
+   return g_strdup(input);
+ }
++
++void mode_selection_changed(Mode *mode, unsigned int index, unsigned int relative_index) {
++  if (mode->_selection_changed) {
++    mode->_selection_changed(mode, index, relative_index);
++  }
++}
++
+ char *mode_get_message(const Mode *mode) {
+   if (mode->_get_message) {
+     return mode->_get_message(mode);
+diff --git a/source/view.c b/source/view.c
+index 143b5af9..b154fc1e 100644
+--- a/source/view.c
++++ b/source/view.c
+@@ -1253,6 +1253,8 @@ inline static void rofi_view_nav_last(RofiViewState *state) {
+   // state->selected = state->filtered_lines - 1;
+   listview_set_selected(state->list_view, -1);
+ }
++
++unsigned int last_index = UINT32_MAX;
+ static void selection_changed_callback(G_GNUC_UNUSED listview *lv,
+                                        unsigned int index, void *udata) {
+   RofiViewState *state = (RofiViewState *)udata;
+@@ -1280,6 +1282,17 @@ static void selection_changed_callback(G_GNUC_UNUSED listview *lv,
+       icon_set_surface(state->icon_current_entry, NULL);
+     }
+   }
++
++  unsigned int absolute_index = UINT_MAX;
++  unsigned int relative_index = UINT_MAX;
++  if (index < state->filtered_lines) {
++    absolute_index = state->line_map[index];
++    relative_index = index;
++  }
++  if (last_index != absolute_index) {
++    mode_selection_changed(state->sw, absolute_index, relative_index);
++  }
++  last_index = absolute_index;
+ }
+ static void update_callback(textbox *t, icon *ico, unsigned int index,
+                             void *udata, TextBoxFontType *type, gboolean full) {
