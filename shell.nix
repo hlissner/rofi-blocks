@@ -21,6 +21,7 @@ mkShell {
       };
       patches = [
         ./patches/mode-selection-changed.patch
+        ./patches/universal-password-flag.patch
       ];
     }))
     pango
