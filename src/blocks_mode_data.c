@@ -55,8 +55,8 @@ static void blocks_mode_private_data_update_input(BlocksModePrivateData* data) {
     blocks_mode_private_data_update_string(data, &data->currentPageData->input, "input");
 }
 
-static void blocks_mode_private_data_update_input_format(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->input_format, "event_format");
+static void blocks_mode_private_data_update_event_format(BlocksModePrivateData* data) {
+    blocks_mode_private_data_update_string(data, &data->event_format, "event_format");
 }
 
 static void blocks_mode_private_data_update_focus_entry(BlocksModePrivateData* data) {
@@ -89,7 +89,7 @@ BlocksModePrivateData* blocks_mode_private_data_new() {
     BlocksModePrivateData* pd = g_malloc0(sizeof(*pd));
     pd->currentPageData = page_data_new();
     pd->currentPageData->markup_default = MarkupStatus_UNDEFINED;
-    pd->input_format = g_string_new("{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
+    pd->event_format = g_string_new("{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
     pd->entry_to_focus = -1;
     pd->input_action = InputAction__FILTER_USING_ROFI;
     pd->close_on_child_exit = TRUE;
@@ -135,7 +135,7 @@ void blocks_mode_private_data_update_page(BlocksModePrivateData* data){
     blocks_mode_private_data_update_input(data);
     blocks_mode_private_data_update_prompt(data);
     blocks_mode_private_data_update_close_on_child_exit(data);
-    blocks_mode_private_data_update_input_format(data);
+    blocks_mode_private_data_update_event_format(data);
     blocks_mode_private_data_update_lines(data);
     blocks_mode_private_data_update_focus_entry(data);
 }

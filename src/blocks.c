@@ -101,7 +101,7 @@ void blocks_mode_private_data_write_to_channel(BlocksModePrivateData* data, Even
         // when script exits or errors while loading
         return;
     }
-    const gchar* format = data->input_format->str;
+    const gchar* format = data->event_format->str;
     gchar* format_result = str_replace(format, "{{event}}", event_enum_labels[event]);
     format_result = str_replace_in(&format_result, "{{value}}", action_value);
     format_result = str_replace_in(&format_result, "{{data}}", action_data);
@@ -280,7 +280,6 @@ static int blocks_mode_init(Mode* sw) {
 
     char* format = NULL;
     if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
-        pd->input_format = g_string_new(format);
     }
 
     char* action = NULL;
@@ -290,6 +289,7 @@ static int blocks_mode_init(Mode* sw) {
                 pd->input_action = (InputAction) i;
             }
         }
+        pd->event_format = g_string_new(format);
     }
 
     char* cmd = NULL;

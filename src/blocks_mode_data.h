@@ -27,8 +27,8 @@ extern const char* const input_action_names[2];
 
 typedef struct {
     PageData* currentPageData;
-    GString* input_format;
     InputAction input_action;
+    GString* event_format;
     gint64 entry_to_focus;
 
     JsonParser* parser;
