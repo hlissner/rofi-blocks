@@ -34,7 +34,8 @@ static const char* get_page_data_string_member_or_empty_string(GString* member) 
     return member == NULL ? EMPTY_STRING : member->str;
 }
 
-static void set_page_data_string_member(GString** member, const char* new_string) {
+
+void page_data_set_string_member(GString** member, const char* new_string) {
     gboolean isDefined = *member != NULL;
     gboolean willDefine = new_string != NULL;
     if (isDefined && willDefine) {
@@ -47,7 +48,6 @@ static void set_page_data_string_member(GString** member, const char* new_string
     }
     // else do nothing, *member is already NULL
 }
-
 
 gboolean page_data_is_string_equal(GString* a, GString* b) {
     if (a == NULL && b == NULL) {
@@ -67,7 +67,7 @@ const char* page_data_get_message_or_empty_string(PageData* page) {
 }
 
 void page_data_set_message(PageData* page, const char* message) {
-    set_page_data_string_member(&page->message, message);
+    page_data_set_string_member(&page->message, message);
 }
 
 gboolean page_data_is_overlay_empty(PageData* page) {
@@ -79,7 +79,7 @@ const char* page_data_get_overlay_or_empty_string(PageData* page) {
 }
 
 void page_data_set_overlay(PageData* page, const char* overlay) {
-    set_page_data_string_member(&page->overlay, overlay);
+    page_data_set_string_member(&page->overlay, overlay);
 }
 
 

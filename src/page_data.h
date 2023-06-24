@@ -37,6 +37,8 @@ PageData* page_data_new();
 
 void page_data_destroy(PageData* page);
 
+void page_data_set_string_member(GString** member, const char* new_string);
+
 gboolean page_data_is_string_equal(GString* a, GString* b);
 
 const char* page_data_get_message_or_empty_string(PageData* page);

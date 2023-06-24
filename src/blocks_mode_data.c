@@ -11,13 +11,16 @@ static const size_t NUM_OF_INPUT_ACTIONS = sizeof(input_action_names) / sizeof((
 static const char* UNDEFINED = "";
 
 
-static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, GString** str, const char* json_root_member) {
-    const gchar* value = json_object_get_string_member_or_else(data->root, json_root_member, NULL);
-    if (value != NULL) {
-        if (*str == NULL) {
-            *str = g_string_sized_new(64);
+static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, GString** str, const char* json_root_member, bool allow_null) {
+    if (data->root != NULL) {
+        JsonNode* node = json_object_get_member(data->root, json_root_member);
+        if (node == NULL) {
+            return;
+        } else if (json_node_is_null(node)) {
+            page_data_set_string_member(str, allow_null ? NULL : "");
+        } else if (json_node_get_value_type(node) == G_TYPE_STRING) {
+            page_data_set_string_member(str, json_node_get_string(node));
         }
-        g_string_assign(*str,value);
     }
 }
 
@@ -34,29 +37,23 @@ static void blocks_mode_private_data_update_input_action(BlocksModePrivateData* 
 
 
 static void blocks_mode_private_data_update_message(BlocksModePrivateData* data) {
-    const gchar* value = json_object_get_nullable_string_member_or_else(data->root, "message", UNDEFINED);
-    if (value != UNDEFINED){
-        page_data_set_message(data->currentPageData, value);
-    }
+    blocks_mode_private_data_update_string(data, &data->currentPageData->message, "message", TRUE);
 }
 
 static void blocks_mode_private_data_update_overlay(BlocksModePrivateData* data) {
-    const gchar* value = json_object_get_nullable_string_member_or_else(data->root, "overlay", UNDEFINED);
-    if (value != UNDEFINED){
-        page_data_set_overlay(data->currentPageData, value);
-    }
+    blocks_mode_private_data_update_string(data, &data->currentPageData->overlay, "overlay", TRUE);
 }
 
 static void blocks_mode_private_data_update_prompt(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->prompt, "prompt");
+    blocks_mode_private_data_update_string(data, &data->currentPageData->prompt, "prompt", TRUE);
 }
 
 static void blocks_mode_private_data_update_input(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->input, "input");
+    blocks_mode_private_data_update_string(data, &data->currentPageData->input, "input", FALSE);
 }
 
 static void blocks_mode_private_data_update_event_format(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->event_format, "event_format");
+    blocks_mode_private_data_update_string(data, &data->event_format, "event_format", FALSE);
 }
 
 static void blocks_mode_private_data_update_focus_entry(BlocksModePrivateData* data) {
