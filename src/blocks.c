@@ -49,29 +49,29 @@ static const gchar* EMPTY_STRING = "";
 typedef enum {
     Event__INIT,
     Event__INPUT_CHANGE,
-    Event__CUSTOM_KEY,
     Event__ACTIVE_ENTRY,
-    Event__SELECT_ENTRY,
-    Event__SELECT_ENTRY_ALT,
-    Event__DELETE_ENTRY, 
-    Event__EXEC_CUSTOM_INPUT,
-    Event__EXEC_CUSTOM_INPUT_ALT,
-    Event__COMPLETE,
-    Event__CANCEL
+    Event__ACCEPT_ENTRY,
+    Event__ACCEPT_ENTRY_ALT,
+    Event__ACCEPT_INPUT,
+    Event__ACCEPT_INPUT_ALT,
+    Event__COMPLETE_ENTRY,
+    Event__DELETE_ENTRY,
+    Event__CUSTOM_KEY,
+    Event__CANCEL,
 } Event;
 
 static const char* event_enum_labels[] = {
     "INIT",
     "INPUT_CHANGE",
-    "CUSTOM_KEY",
     "ACTIVE_ENTRY",
-    "SELECT_ENTRY",
-    "SELECT_ENTRY_ALT",
-    "DELETE_ENTRY", 
-    "EXEC_CUSTOM_INPUT",
-    "EXEC_CUSTOM_INPUT_ALT",
-    "COMPLETE",
-    "CANCEL"
+    "ACCEPT_ENTRY",
+    "ACCEPT_ENTRY_ALT",
+    "ACCEPT_INPUT",
+    "ACCEPT_INPUT_ALT",
+    "COMPLETE_ENTRY",
+    "DELETE_ENTRY",
+    "CUSTOM_KEY",
+    "CANCEL",
 };
 
 
@@ -369,18 +369,18 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
         snprintf(keycode, 8, "%d", (mretv & MENU_LOWER_MASK)%20 + 1);
         blocks_mode_private_data_write_to_channel(data, Event__CUSTOM_KEY, keycode, selected_line == -1 ? "" : "1");
     } else if (mretv & MENU_COMPLETE) {
-        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, *input, selected_line == -1 ? "" : "1");
+        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE_ENTRY, *input, selected_line == -1 ? "" : "1");
     } else if (mretv & MENU_OK) {
         if (line->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(
-            data, (mretv & MENU_CUSTOM_ACTION) ? Event__SELECT_ENTRY_ALT : Event__SELECT_ENTRY,
+            data, (mretv & MENU_CUSTOM_ACTION) ? Event__ACCEPT_ENTRY_ALT : Event__ACCEPT_ENTRY,
             line->text, line->data);
     } else if (mretv & MENU_ENTRY_DELETE) {
         if (line->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(data, Event__DELETE_ENTRY, line->text, line->data);
     } else if (mretv & MENU_CUSTOM_INPUT) {
         blocks_mode_private_data_write_to_channel(
-            data, (mretv & MENU_CUSTOM_ACTION) ? Event__EXEC_CUSTOM_INPUT_ALT : Event__EXEC_CUSTOM_INPUT,
+            data, (mretv & MENU_CUSTOM_ACTION) ? Event__ACCEPT_INPUT_ALT : Event__ACCEPT_INPUT,
             *input, "");
     } else if (mretv & MENU_CANCEL) {
         blocks_mode_private_data_write_to_channel(data, Event__CANCEL, "", "");
