@@ -3,11 +3,6 @@
 #include "blocks_mode_data.h"
 
 
-const char* const input_action_names[2] = {
-    "send",
-    "filter"
-};
-static const size_t NUM_OF_INPUT_ACTIONS = sizeof(input_action_names) / sizeof((input_action_names)[0]);
 static const char* UNDEFINED = "";
 
 
@@ -24,17 +19,14 @@ static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, 
     }
 }
 
-static void blocks_mode_private_data_update_input_action(BlocksModePrivateData* data) {
-    const gchar* input_action = json_object_get_string_member_or_else(data->root, "input_action", NULL);
-    if (input_action != NULL) {
-        for (int i = 0; i < NUM_OF_INPUT_ACTIONS; ++i) {
-            if (g_strcmp0(input_action, input_action_names[i]) == 0) {
-                data->input_action = (InputAction) i;
-            }
-        }
-    }
+
+static void blocks_mode_private_data_update_case_sensitivity(BlocksModePrivateData* data) {
+    data->currentPageData->case_sensitive = json_object_get_boolean_member_or_else(data->root, "case_sensitive", data->currentPageData->case_sensitive);
 }
 
+static void blocks_mode_private_data_update_filter(BlocksModePrivateData* data) {
+    blocks_mode_private_data_update_string(data, &data->currentPageData->filter, "filter", TRUE);
+}
 
 static void blocks_mode_private_data_update_message(BlocksModePrivateData* data) {
     blocks_mode_private_data_update_string(data, &data->currentPageData->message, "message", TRUE);
@@ -88,7 +80,7 @@ BlocksModePrivateData* blocks_mode_private_data_new() {
     pd->currentPageData->markup_default = MarkupStatus_UNDEFINED;
     pd->event_format = g_string_new("{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
     pd->entry_to_focus = -1;
-    pd->input_action = InputAction__FILTER_USING_ROFI;
+    pd->tokens = NULL;
     pd->close_on_child_exit = TRUE;
     pd->cmd_pid = 0;
     pd->buffer = g_string_sized_new(1024);
@@ -108,6 +100,9 @@ void blocks_mode_private_data_update_destroy(BlocksModePrivateData* data){
     if (data->parser) {
         g_object_unref(data->parser);
     }
+    if (data->tokens) {
+        helper_tokenize_free(data->tokens);
+    }
     page_data_destroy(data->currentPageData);
     close(data->write_channel_fd);
     close(data->read_channel_fd);
@@ -126,7 +121,8 @@ void blocks_mode_private_data_update_page(BlocksModePrivateData* data){
 
     data->root = json_node_get_object(json_parser_get_root(data->parser));
 
-    blocks_mode_private_data_update_input_action(data);
+    blocks_mode_private_data_update_case_sensitivity(data);
+    blocks_mode_private_data_update_filter(data);
     blocks_mode_private_data_update_message(data);
     blocks_mode_private_data_update_overlay(data);
     blocks_mode_private_data_update_input(data);

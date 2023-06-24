@@ -15,10 +15,12 @@ typedef enum {
 
 typedef struct {
     MarkupStatus markup_default;
+    gboolean case_sensitive;
     GString* message;
     GString* overlay;
     GString* prompt;
     GString* input;
+    GString* filter;
     GArray* lines;
 } PageData;
 
@@ -30,6 +32,7 @@ typedef struct {
     gboolean highlight;
     gboolean markup;
     gboolean nonselectable;
+    gboolean filter;
     uint32_t icon_fetch_uid; //cache icon uid
 } LineData;
 
@@ -64,7 +67,8 @@ void page_data_add_line(PageData* page,
                         gboolean urgent,
                         gboolean highlight,
                         gboolean markup,
-                        gboolean nonselectable);
+                        gboolean nonselectable,
+                        gboolean filter);
 
 void page_data_add_line_json_node(PageData* page, JsonNode* node);
 

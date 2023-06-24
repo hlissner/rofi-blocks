@@ -2,6 +2,7 @@
 // Copyright (C) 2020 Omar Castro
 #include "json_glib_extensions.h"
 #include "page_data.h"
+#include <rofi/helper.h>
 
 static const gchar* EMPTY_STRING = "";
 
@@ -10,6 +11,8 @@ PageData* page_data_new() {
     page->message = NULL;
     page->overlay = NULL;
     page->prompt = NULL;
+    page->filter = NULL;
+    page->case_sensitive = FALSE;
     page->input = g_string_sized_new(256);
     page->lines = g_array_new(FALSE, TRUE, sizeof(LineData));
     return page;
@@ -20,6 +23,7 @@ void page_data_destroy(PageData* page) {
     page->message != NULL && g_string_free(page->message, TRUE);
     page->overlay != NULL && g_string_free(page->overlay, TRUE);
     page->prompt != NULL && g_string_free(page->prompt, TRUE);
+    page->filter != NULL && g_string_free(page->filter, TRUE);
     g_string_free(page->input, TRUE);
     g_array_free(page->lines, TRUE);
     g_free(page);
@@ -82,6 +86,10 @@ void page_data_set_overlay(PageData* page, const char* overlay) {
     page_data_set_string_member(&page->overlay, overlay);
 }
 
+void page_data_set_filter(PageData* page, const char* filter) {
+    page_data_set_string_member(&page->filter, filter);
+}
+
 
 
 size_t page_data_get_number_of_lines(PageData* page) {
@@ -104,7 +112,8 @@ void page_data_add_line(PageData* page,
                         gboolean urgent,
                         gboolean highlight,
                         gboolean markup,
-                        gboolean nonselectable) {
+                        gboolean nonselectable,
+                        gboolean filter) {
     LineData line = {
         .text = g_strdup(label),
         .icon = g_strdup(icon),
@@ -112,14 +121,15 @@ void page_data_add_line(PageData* page,
         .urgent = urgent,
         .highlight = highlight,
         .markup = markup,
-        .nonselectable = nonselectable
+        .nonselectable = nonselectable,
+        .filter = filter
     };
     g_array_append_val(page->lines, line);
 }
 
 void page_data_add_line_json_node(PageData* page, JsonNode* node) {
     if (JSON_NODE_HOLDS_VALUE(node) && json_node_get_value_type(node) == G_TYPE_STRING) {
-        page_data_add_line(page, json_node_get_string(node), EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, page->markup_default == MarkupStatus_ENABLED, FALSE);
+        page_data_add_line(page, json_node_get_string(node), EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, page->markup_default == MarkupStatus_ENABLED, FALSE, TRUE);
     } else if (JSON_NODE_HOLDS_OBJECT(node)) {
         JsonObject* line_obj = json_node_get_object(node);
         const gchar* text = json_object_get_string_member_or_else(line_obj, "text", EMPTY_STRING);
@@ -129,7 +139,8 @@ void page_data_add_line_json_node(PageData* page, JsonNode* node) {
         gboolean highlight = json_object_get_boolean_member_or_else(line_obj, "highlight", FALSE);
         gboolean markup = json_object_get_boolean_member_or_else(line_obj, "markup", page->markup_default == MarkupStatus_ENABLED);
         gboolean nonselectable = json_object_get_boolean_member_or_else(line_obj, "nonselectable", FALSE);
-        page_data_add_line(page, text, icon, data, urgent, highlight, markup, nonselectable);
+        gboolean filter = json_object_get_boolean_member_or_else(line_obj, "filter", TRUE);
+        page_data_add_line(page, text, icon, data, urgent, highlight, markup, nonselectable, filter);
     }
 }
 

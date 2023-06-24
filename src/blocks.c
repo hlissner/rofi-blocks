@@ -43,7 +43,6 @@ const gchar* CmdArg__BLOCKS_WRAP = "-blocks-wrap";
 const gchar* CmdArg__BLOCKS_PROMPT = "-blocks-prompt";
 const gchar* CmdArg__MARKUP_ROWS = "-markup-rows";
 const gchar* CmdArg__EVENT_FORMAT = "-event-format";
-const gchar* CmdArg__INPUT_ACTION = "-input-action";
 
 static const gchar* EMPTY_STRING = "";
 
@@ -120,9 +119,7 @@ void blocks_mode_verify_input_change(BlocksModePrivateData* data, const char* ne
     GString* input = page->input;
     if (g_strcmp0(input->str, new_input) != 0) {
         g_string_assign(input, new_input);
-        if (data->input_action == InputAction__SEND_ACTION) {
-            blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input, "");
-        }
+        blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input, "");
     }
 }
 
@@ -178,18 +175,31 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* overlay = data->currentPageData->overlay;
         GString* prompt = data->currentPageData->prompt;
         GString* input = data->currentPageData->input;
+        GString* filter = data->currentPageData->filter;
 
         GString* old_overlay = overlay ? g_string_new(overlay->str) : NULL;
         GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
         GString* old_input = input ? g_string_new(input->str) : NULL;
+        GString* old_filter = filter ? g_string_new(filter->str) : NULL;
 
         blocks_mode_private_data_update_page(data);
 
         GString* new_overlay = data->currentPageData->overlay;
         GString* new_prompt = data->currentPageData->prompt;
         GString* new_input = data->currentPageData->input;
+        GString* new_filter = data->currentPageData->filter;
 
         RofiViewState* state = rofi_view_get_active();
+
+        if (!page_data_is_string_equal(old_filter, new_filter)) {
+            if (data->tokens != NULL) {
+                helper_tokenize_free(data->tokens);
+            }
+            data->tokens = new_filter == NULL
+                ? NULL
+                : helper_tokenize(new_filter->str, data->currentPageData->case_sensitive);
+        }
+
         if (!page_data_is_string_equal(old_overlay, new_overlay)) {
             rofi_view_set_overlay(state, (new_overlay->len > 0) ? new_overlay->str : NULL);
         }
@@ -280,15 +290,6 @@ static int blocks_mode_init(Mode* sw) {
 
     char* format = NULL;
     if (find_arg_str(CmdArg__EVENT_FORMAT, &format)) {
-    }
-
-    char* action = NULL;
-    if (find_arg_str(CmdArg__INPUT_ACTION, &action)) {
-        for (int i = 0; i < 2; ++i) {
-            if(g_strcmp0(action, input_action_names[i]) == 0) {
-                pd->input_action = (InputAction) i;
-            }
-        }
         pd->event_format = g_string_new(format);
     }
 
@@ -475,21 +476,14 @@ static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, un
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
     PageData* page = data->currentPageData;
     LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
-    if (line == NULL) {
-        return FALSE;
-    }
+    if (line == NULL) { return FALSE; }
+    if (!line->filter) { return FALSE; }
 
-    if (data->input_action == InputAction__SEND_ACTION) {
-        return TRUE;
-    }
-
+    if (data->tokens != NULL) { tokens = data->tokens; }
+    if (!line->markup) { return helper_token_match(tokens, line->text); }
     // Strip out markup when matching
     char* esc = NULL;
-    if (line->markup) {
-        pango_parse_markup(line->text, -1, 0, NULL, &esc, NULL, NULL);
-    } else {
-        esc = line->text;
-    }
+    pango_parse_markup(line->text, -1, 0, NULL, &esc, NULL, NULL);
     return helper_token_match(tokens, esc);
 }
 

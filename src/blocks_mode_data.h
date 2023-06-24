@@ -13,23 +13,19 @@
 
 #include <glib-object.h>
 #include <json-glib/json-glib.h>
+#include <rofi/rofi-types.h>
+#include <rofi/helper.h>
 
 #include "string_utils.h"
 #include "render_state.h"
 #include "page_data.h"
 #include "json_glib_extensions.h"
 
-typedef enum {
-    InputAction__SEND_ACTION,
-    InputAction__FILTER_USING_ROFI
-} InputAction;
-extern const char* const input_action_names[2];
-
 typedef struct {
     PageData* currentPageData;
-    InputAction input_action;
     GString* event_format;
     gint64 entry_to_focus;
+    rofi_int_matcher **tokens;
 
     JsonParser* parser;
     JsonObject* root;
