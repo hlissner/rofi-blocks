@@ -1,4 +1,4 @@
-AC_INIT([rofi-blocks], [0.1.0], [https://github.com/OmarCastro/rofi-blocks/],)
+AC_INIT([rofi-blocks], [0.1.0], [https://github.com/hlissner/rofi-blocks/],)
 
 AC_CONFIG_HEADER([config.h])
 AC_REQUIRE_AUX_FILE([tap-driver.sh])

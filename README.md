@@ -1,10 +1,46 @@
+> This was forked from the fantastic OmarCastro/rofi-blocks and is being used as
+> the backbone for a Rofi UI framework I'm developing for [my
+> dotfiles](https://github.com/hlissner/dotfiles). 
+>
+> Users that have used rofi-blocks before and are interested in the work here,
+> be warned, it contains many backwards-incompatible changes:
+>
+> - This fork depends on some patches to Rofi that only exist in this repo.
+>   Find them in `patches/`. Feel free to PR them upstream if you think they
+>   have merit, but not as-is -- they are designed for minimal impact more than
+>   correctness.
+> - Events:
+>   - Changes the default event format to `{"event":"{{event}}",
+>     "value":"{{value_escaped}}", "data":"{{data_escaped}}"}`. `{{event}}` was
+>     formerly `{{name_enum}}`, which is now the only option; both `name` and
+>     `name_escaped` have been removed.
+>   - Adopts a new naming convention for input and event parameters for simpler
+>     parsing, by replacing all spaces with underscores: E.g. `event format` =>
+>     `event_format`.
+>   - Renames two events to closer match the keybindings that invoke them:
+>     - `SELECT_ENTRY` => `ACCEPT_ENTRY`
+>     - `EXEC_CUSTOM_INPUT` => `ACCEPT_INPUT`
+>   - Adds six new events: `INIT`, `CANCEL`, `EXIT`, `COMPLETE_ENTRY`,
+>     `ACCEPT_ENTRY_ALT`, and `ACCEPT_INPUT_ALT`. (Details below).
+>   - Changes the behavior of three pre-existing events:
+>     - `ACTIVE_ENTRY` events are emitted whenever the user changes the selected
+>       line, and is no longer tied specifically (or exclusively) to the
+>       `CUSTOM_KEY` event.
+>     - `CUSTOM_KEY` events can now be emitted when the list is empty.
+>     - `INPUT_CHANGE` is now emitted unconditionally, when the input field is
+>       changed.
+> - Input parameters:
+>   - Renames `input_format` to `event_format`.
+>   - Removes `input_action` and replaces it with `filter` and `case_sensitive`
+>     fields. (Details below)
+>   - Adds a `filter` parameter to lines. (Details below)
+
 # rofi-blocks
-
-Rofi modi that allows controlling rofi content through communication with an external program
-
-To run this you need an up to date checkout of rofi git installed.
-
-Run rofi like:
+This Rofi modi allows for live manipulation of Rofi's content through an
+external process (or STDIN, in the shell), as an extension of Rofi's scripting
+capabilities. This allows users to change the message, input, overlay, or prompt
+text on-the-fly; modify the list of entries asynchronously; and respond to user
+actions, specific keybinds, or react/affect Rofi as they type.
 
 ```bash
 rofi -modi blocks -show blocks
@@ -15,18 +51,14 @@ rofi -modi blocks -show blocks
      [ -markup-rows ]
 ```
 
-### Dependencies
-
-| Dependency | Version |
-|------------|---------|
-| rofi 	     | 1.4     |
-| json-glib  | 1.0     |
+## Dependencies
+- rofi 1.7.5-dev (with my patch)
+- json-glib 1.0+
 
 
-### Installation
-
-**Rofi-blocks** uses autotools as build system. When installing from git, the following steps should install it:
-
+# Installation
+**rofi-blocks** uses autotools as a build system. When installing from git, the
+following steps should install it:
 ```bash
 $ autoreconf -i
 $ mkdir build
@@ -37,54 +69,34 @@ $ make install
 ```
 
 
-### Background
-
-This module was created to extend rofi scripting capabilities, such as:
-
- - Changing the message and list content on the fly
-
- - Allow update of content on intervals, without the need of interaction (e.g. top)
-
- - Allow changing the input prompt on the fly, or be defined on the script instead of rofi command line
-
- - Allow custom overlay message
- 
-
-### Documentation
-
-The module works by reading the stdin line by line to update rofi content. It can execute an application in the background, which will be used to communicate with the modi. The communication is made using file descriptors. The modi reads the output of the backgroung program and writes events its input.
-
-#### Communication
-
-This modi updates rofi each time it reads a line from the stdin or background program output, and writes an event made from rofi, in most cases is an interaction with the window, as a single line to stdout or its input. The format used for communication is JSON format.
-
-#### Why JSON:
-
-For the following reasons:
-1. All information can be stored in one line
-2. It is simple to write
-
-##### All information can be stored in one line
-
- New lines on message and text can be escaped with `\n` , this helps the modi to know when to stop reading and starts parsing the message, preventing cases of the program flushing incomplete lines, and json parser failing due to incomplete messages.
-
-##### It is simple to write
-There is no need to have a library or framework to write json, there are, however, few consideration when transforming text to json string, such as escaping backlashes, newlines and double quotes, something like that can be done with a string replacer, like the `replace()` method in python or `sed` command in bash
+# Examples
+See the `examples/` folder for example use-cases for this modi.
 
 
-#### Output JSON format
+# How it works
+This module reads STDIN (or the STDOUT of a background process) line-by-line.
+These are output payloads (i.e. from a user/process), and they may embed
+commands to manipulate Rofi's content.
 
-The JSON format used to communicate with the modi is the one on the next figure, all fields are optional:
+The module will also write events to STDOUT line-by-line. Each line is a full
+input payload (i.e. from Rofi to the user/background process). **No payload
+spans more than one line** -- newlines within are escaped.
 
+All payloads are formatted as JSON, but this can be changed.
+
+## Output format
+An output payload contains only the Rofi state you want changed. For example:
 ```json
 {
-  "message": "rofi message text",
-  "overlay": "overlay text",
-  "prompt": "prompt text",
-  "input": "input text",
-  "input_action": "input action, 'send' or 'filter'",
-  "event_format": "event_format",
-  "active_entry": 3,
+  "active_entry": 0,
+  "case_sensitive": false,
+  "event_format": "{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}",
+  "filter": "",
+  "input": "",
+  "message": "",
+  "overlay": "",
+  "prompt": "",
+
   "lines":[
     "one line is a line from input", 
     {"text":"can be a string or object"}, 
@@ -93,47 +105,48 @@ The JSON format used to communicate with the modi is the one on the next figure,
     {"text":"as well as markup", "markup": true},
     {"text":"or both", "urgent":true, "highlight": true, "markup":true},
     {"text":"you can put an icon too", "icon": "folder"},
+    {"text":"this line will always be visible", "filter": false},
     {"text":"you can put metadata that it will echo on the event", "data": "entry_number:\"8 (7 starting from 0)\"\nthis_is:yaml\nbut_it_can_be:any format"},
   ]
 }
 ```
 
-##### Property table
+### Output properties
+| Property       | Description                                                                                                                                                                  |
+|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| active_entry   | Zero-based index of the entry to select: <br> - a value equal or larger than the number of lines will focus the last entry. <br> - negative or floating numbers are ignored. |
+| case_sensitive | If true, filtering is case sensitive                                                                                                                                         |
+| close_on_exit  | If true, close rofi when the connected process exits                                                                                                                         |
+| event_format   | Format used for events emitted to stdout; details in next section                                                                                                            |
+| filter         | The search query to filter lines against. Set to an empty string to filter nothing, or null to revert to default behavior                                                    |
+| input          | Sets input text, to clear use empty string or null                                                                                                                           |
+| lines          | A list of strings or json objects representing rofi's listview content                                                                                                       |
+| message        | Sets Rofi message, hides it if empty or null                                                                                                                                 |
+| overlay        | Shows overlay with text, hides it if empty or null                                                                                                                           |
+| prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                           |
 
-| Property     | Description                                          |
-|--------------|------------------------------------------------------|
-| message 	   | Sets rofi message, hides it if empty or null         |
-| overlay      | Shows overlay with text, hides it if empty or null   |
-| prompt       | sets prompt text                                     |
-| input        | sets input text, to clear use empty string           |
-| input_action | Sets input change action only two values are accepted, any other is ignored. <br> **filter***(default)*: rofi filters the content, no event is sent to program input <br> **send**: prevents rofi filter and sends an "*input change*" event to program input |
-| event_format | event format used to send to input, more of it on next section |
-| active_entry | entry to be focused/active: <br> - the first entry number is 0; <br> - a value equal or larger than the number of lines will focus the first one; <br> - negative or floating numbers are ignored.  |
-| lines        | a list of sting or json object to set rofi list content, a string will show a text with all flags disabled.  |
+### Line properties
+| Property      | Description                                                                  |
+|---------------|------------------------------------------------------------------------------|
+| text          | entry text                                                                   |
+| urgent        | flag: defines entry as urgent                                                |
+| highlight     | flag: highlight the entry                                                    |
+| markup        | flag: enables/disables pango markup. If omitted, `-markup-rows` is respected |
+| filter        | flag: if false, this line is never filtered (e.g. always visible)            |
+| nonselectable | flag: if true, accepting this entry does nothing                             |
+| icon          | the name or path to an icon in your active icon theme                        |
+| data          | metadata associated with that line; can contain any arbitrary data           |
 
-
-##### Line Property table
-
-| Property      | Description                                                                                         |
-|---------------|-----------------------------------------------------------------------------------------------------|
-| text          | entry text                                                                                          |
-| urgent        | flag: defines entry as urgent                                                                       |
-| highlight     | flag: highlight the entry                                                                           |
-| markup        | flag: enables/disables highlight. if not defined, rofi config is used (enabled with `-markup-rows`) |
-| nonselectable | flag: if true, selecting the entry does nothing                                                     |
-| icon          | entry icon                                                                                          |
-| data          | entry metadata                                                                                      |
-
-#### Input format
-
-rofi-blocks emits events in JSON, by default. This can be configured, by  the `event_format` property.
-
-The default format is:
+## Input format
+rofi-blocks emits an input payload whenever an event is triggered. The format of
+this payload is set according to the `event_format` property. The default format
+is:
 ```json
 {"event":"{{event}}", "value":"{{value_escaped}}", "data":"{{data_escaped}}"}
 ```
 
-Each {{parameter}} is replaced as per the table below:
+### Event format parameters
+Each `{{parameter}}` is replaced as per the table below:
 | Parameter     | Format              | Description                                                                                                                                                                                                                                               |
 |---------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | event         | `{{event}}`         | name of the event                                                                                                                                                                                                                                         |
@@ -142,24 +155,20 @@ Each {{parameter}} is replaced as per the table below:
 | data          | `{{data}}`          | additional data of the event: <br> - **entry metadata** on entry select or delete <br> - **"1"** on custom command or complete, indicating that an active entry event was emitted prior<br> - **empty sting** if entry has no metadata, or on other event |
 | data_escaped  | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string                                                                                                                                                                                    |
 
-##### Events:
-
-| Name                  | Value               | Data                        | Description                                                                                            |
-|-----------------------|---------------------|-----------------------------|--------------------------------------------------------------------------------------------------------|
-| INPUT_CHANGE          | new_input           | ""                          | when input changes and input action is set to `send`                                                   |
-| CUSTOM_KEY            | keycode (number)    | if active entry "1" else "" | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
-| COMPLETE              | current_input       | if active entry "1" else "" | when `kb-mode-complete` is typed                                                                       |
-| CANCEL                | ""                  | ""                          | when Rofi is aborted (typically with `kb-cancel`)                                                      |
-| ACTIVE_ENTRY          | selected entry text | selected entry data         | announces the currently selected entry in list, prior to a `custom key` or `complete` event            |
-| SELECT_ENTRY          | selected entry text | selected entry data         | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
-| SELECT_ENTRY_ALT      | selected entry text | selected entry data         | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
-| DELETE_ENTRY          | selected entry text | selected entry data         | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
-| EXEC_CUSTOM_INPUT     | current_input       | ""                          | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
-| EXEC_CUSTOM_INPUT_ALT | current_input       | ""                          | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+### Events
+| Name             | Value               | Data                        | Description                                                                                            |
+|------------------|---------------------|-----------------------------|--------------------------------------------------------------------------------------------------------|
+| INIT             | rofi_blocks_version | rofi_abi_version            | emitted once, when rofi-blocks is ready                                                                |
+| INPUT_CHANGE     | new_input           | ""                          | when input changes and input action is set to `send`                                                   |
+| CUSTOM_KEY       | keycode (number)    | if active entry "1" else "" | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
+| COMPLETE_ENTRY   | current_input       | if active entry "1" else "" | when `kb-mode-complete` is typed                                                                       |
+| ACTIVE_ENTRY     | selected entry text | selected entry data         | emitted each time the selected entry changes                                                           |
+| ACCEPT_ENTRY     | selected entry text | selected entry data         | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
+| ACCEPT_ENTRY_ALT | selected entry text | selected entry data         | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
+| DELETE_ENTRY     | selected entry text | selected entry data         | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
+| ACCEPT_INPUT     | current_input       | if active entry "1" else "" | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
+| ACCEPT_INPUT_ALT | current_input       | if active entry "1" else "" | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+| CANCEL           | ""                  | ""                          | when Rofi is aborted by the user (typically with `kb-cancel`)                                          |
+| EXIT             | ""                  | ""                          | as Rofi is closing the mode, whether or not the user initiated it                                      |
 
 > Details on Rofi keybinds are available [in the Rofi manual](https://github.com/davatorium/rofi/blob/next/doc/rofi-keys.5.markdown).
-
-
-### Examples
-
-Additional documentation is created in the form of functional examples, you can compile and install the modi and execute examples in examples folder to understand and play with the modi.

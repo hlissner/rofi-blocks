@@ -14,13 +14,13 @@ toLinesJson(){
 
 TEXT=$(cat <<EOF | tr -d "\n" | tr -d "\t"
 {
-	"input_action":"send",
+	"filter":"",
 	"prompt":"updating input also logs action",
 	"event_format":"${custom_format}",
 	"message": "Same as action logger but with different event_format \n
 		the format used is \"${custom_format}\" \n
 		valid parameters: \n
-		 {{event}} - event name, e.g. SELECT_ENTRY\n
+		 {{event}} - event name, e.g. ACCEPT_ENTRY\n
 		 {{value}} - event related information\n
 		 {{value_escaped}} - event related information, escaped to work on a json string\n
 		 \n

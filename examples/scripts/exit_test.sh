@@ -27,8 +27,8 @@ log_action
 
 while read -r line; do
 	case "$line" in
-		"SELECT_ENTRY exit script with rofi" ) exit 0;;
-		"SELECT_ENTRY exit script without closing rofi" ) 
+		"ACCEPT_ENTRY exit script with rofi" ) exit 0;;
+		"ACCEPT_ENTRY exit script without closing rofi" ) 
 			stdbuf -oL echo '{"close_on_exit": false, "message":"exit test\nscript ended\nNow all options will do nothing"}'
 			sleep 0.1
 			exit 0;;

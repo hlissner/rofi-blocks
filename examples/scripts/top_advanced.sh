@@ -162,10 +162,10 @@ while read -r line; do
 		"CUSTOM_KEY 1" ) sort_column_set "PID";;
 		"CUSTOM_KEY 2" ) sort_column_set "%CPU";;
 		"CUSTOM_KEY 3" ) sort_column_set "%MEM";;
-		"SELECT_ENTRY return" ) selected_pid_clear;;
-		"SELECT_ENTRY terminate (send SIGTERM signal)" ) kill -s SIGTERM "$(selected_pid_get)"; selected_pid_clear;;
-		"SELECT_ENTRY kill (send SIGKILL signal)" ) kill -s SIGKILL "$(selected_pid_get)"; selected_pid_clear;;
-		SELECT_ENTRY* ) ACTIVE_ENTRY='"ACTIVE_ENTRY": 0,'; selected_pid_set "$( tr -s " " <<< "$line" | cut -d" " -f2,2)";;
+		"ACCEPT_ENTRY return" ) selected_pid_clear;;
+		"ACCEPT_ENTRY terminate (send SIGTERM signal)" ) kill -s SIGTERM "$(selected_pid_get)"; selected_pid_clear;;
+		"ACCEPT_ENTRY kill (send SIGKILL signal)" ) kill -s SIGKILL "$(selected_pid_get)"; selected_pid_clear;;
+		ACCEPT_ENTRY* ) ACTIVE_ENTRY='"ACTIVE_ENTRY": 0,'; selected_pid_set "$( tr -s " " <<< "$line" | cut -d" " -f2,2)";;
 
 	esac
 done
