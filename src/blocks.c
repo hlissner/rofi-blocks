@@ -58,6 +58,7 @@ typedef enum {
     Event__DELETE_ENTRY,
     Event__CUSTOM_KEY,
     Event__CANCEL,
+    Event__EXIT
 } Event;
 
 static const char* event_enum_labels[] = {
@@ -72,6 +73,7 @@ static const char* event_enum_labels[] = {
     "DELETE_ENTRY",
     "CUSTOM_KEY",
     "CANCEL",
+    "EXIT"
 };
 
 
@@ -394,6 +396,7 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
 static void blocks_mode_destroy(Mode* sw) {
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
     if (data != NULL) {
+        blocks_mode_private_data_write_to_channel(data, Event__EXIT, "", "");
         blocks_mode_private_data_update_destroy(data);
         mode_set_private_data(sw, NULL);
     }
