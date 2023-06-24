@@ -20,7 +20,7 @@
 >   - Renames two events to closer match the keybindings that invoke them:
 >     - `SELECT_ENTRY` => `ACCEPT_ENTRY`
 >     - `EXEC_CUSTOM_INPUT` => `ACCEPT_INPUT`
->   - Adds six new events: `INIT`, `CANCEL`, `EXIT`, `COMPLETE_ENTRY`,
+>   - Adds six new events: `INIT`, `CANCEL`, `EXIT`, `COMPLETE`,
 >     `ACCEPT_ENTRY_ALT`, and `ACCEPT_INPUT_ALT`. (Details below).
 >   - Changes the behavior of three pre-existing events:
 >     - `ACTIVE_ENTRY` events are emitted whenever the user changes the selected
@@ -156,19 +156,19 @@ Each `{{parameter}}` is replaced as per the table below:
 | data_escaped  | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string                                                                                                                                                                                    |
 
 ### Events
-| Name             | Value               | Data                        | Description                                                                                            |
-|------------------|---------------------|-----------------------------|--------------------------------------------------------------------------------------------------------|
-| INIT             | rofi_blocks_version | rofi_abi_version            | emitted once, when rofi-blocks is ready                                                                |
-| INPUT_CHANGE     | new_input           | ""                          | when input changes and input action is set to `send`                                                   |
-| CUSTOM_KEY       | keycode (number)    | if active entry "1" else "" | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
-| COMPLETE_ENTRY   | current_input       | if active entry "1" else "" | when `kb-mode-complete` is typed                                                                       |
-| ACTIVE_ENTRY     | selected entry text | selected entry data         | emitted each time the selected entry changes                                                           |
-| ACCEPT_ENTRY     | selected entry text | selected entry data         | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
-| ACCEPT_ENTRY_ALT | selected entry text | selected entry data         | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
-| DELETE_ENTRY     | selected entry text | selected entry data         | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
-| ACCEPT_INPUT     | current_input       | if active entry "1" else "" | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
-| ACCEPT_INPUT_ALT | current_input       | if active entry "1" else "" | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
-| CANCEL           | ""                  | ""                          | when Rofi is aborted by the user (typically with `kb-cancel`)                                          |
-| EXIT             | ""                  | ""                          | as Rofi is closing the mode, whether or not the user initiated it                                      |
+| Name             | Value                          | Data                           | Description                                                                                            |
+|------------------|--------------------------------|--------------------------------|--------------------------------------------------------------------------------------------------------|
+| INIT             | rofi_blocks_version (string)   | rofi_abi_version (string)      | emitted once, when rofi-blocks is ready                                                                |
+| ACTIVE_ENTRY     | active entry text or "" if n/a | active entry data or "" if n/a | emitted each time the selected entry changes                                                           |
+| ACCEPT_ENTRY     | active entry text              | active entry data              | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
+| ACCEPT_ENTRY_ALT | active entry text              | active entry data              | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
+| DELETE_ENTRY     | active entry text              | active entry data              | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
+| ACCEPT_INPUT     | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
+| ACCEPT_INPUT_ALT | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+| COMPLETE         | ""                             | ""                             | when `kb-mode-complete` is typed                                                                       |
+| CUSTOM_KEY       | keycode (integer)              | "1" if active entry, else ""   | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
+| INPUT_CHANGE     | input text                     | ""                             | when input changes and input action is set to `send`                                                   |
+| CANCEL           | ""                             | ""                             | when Rofi is aborted by the user (typically with `kb-cancel`)                                          |
+| EXIT             | ""                             | ""                             | as Rofi is closing the mode, whether or not the user initiated it                                      |
 
 > Details on Rofi keybinds are available [in the Rofi manual](https://github.com/davatorium/rofi/blob/next/doc/rofi-keys.5.markdown).

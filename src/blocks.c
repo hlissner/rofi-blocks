@@ -54,7 +54,7 @@ typedef enum {
     Event__ACCEPT_ENTRY_ALT,
     Event__ACCEPT_INPUT,
     Event__ACCEPT_INPUT_ALT,
-    Event__COMPLETE_ENTRY,
+    Event__COMPLETE,
     Event__DELETE_ENTRY,
     Event__CUSTOM_KEY,
     Event__CANCEL,
@@ -69,7 +69,7 @@ static const char* event_enum_labels[] = {
     "ACCEPT_ENTRY_ALT",
     "ACCEPT_INPUT",
     "ACCEPT_INPUT_ALT",
-    "COMPLETE_ENTRY",
+    "COMPLETE",
     "DELETE_ENTRY",
     "CUSTOM_KEY",
     "CANCEL",
@@ -358,9 +358,6 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
     LineData* line;
     if (selected_line >= 0 && selected_line < page->lines->len) {
         line = &g_array_index(page->lines, LineData, selected_line);
-        /* if (mretv & (MENU_CUSTOM_COMMAND | MENU_COMPLETE)) { */
-        /*     blocks_mode_private_data_write_to_channel(data, Event__ACTIVE_ENTRY, line->text, line->data); */
-        /* } */
     } else {
         selected_line = -1;
     }
@@ -371,7 +368,7 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
         snprintf(keycode, 8, "%d", (mretv & MENU_LOWER_MASK)%20 + 1);
         blocks_mode_private_data_write_to_channel(data, Event__CUSTOM_KEY, keycode, selected_line == -1 ? "" : "1");
     } else if (mretv & MENU_COMPLETE) {
-        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE_ENTRY, *input, selected_line == -1 ? "" : "1");
+        blocks_mode_private_data_write_to_channel(data, Event__COMPLETE, "", "");
     } else if (mretv & MENU_OK) {
         if (line->nonselectable) { return RELOAD_DIALOG; }
         blocks_mode_private_data_write_to_channel(
@@ -383,7 +380,7 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
     } else if (mretv & MENU_CUSTOM_INPUT) {
         blocks_mode_private_data_write_to_channel(
             data, (mretv & MENU_CUSTOM_ACTION) ? Event__ACCEPT_INPUT_ALT : Event__ACCEPT_INPUT,
-            *input, "");
+            *input, selected_line == -1 ? "" : "1");
     } else if (mretv & MENU_CANCEL) {
         blocks_mode_private_data_write_to_channel(data, Event__CANCEL, "", "");
         retv = MODE_EXIT;
