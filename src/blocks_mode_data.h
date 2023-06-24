@@ -40,7 +40,6 @@ typedef struct {
     int write_channel_fd;
     int read_channel_fd;
     guint read_channel_watcher;
-    gboolean waiting_for_idle;
 
     RenderState* render_state;
 } BlocksModePrivateData;

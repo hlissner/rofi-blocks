@@ -22,6 +22,7 @@ mkShell {
       patches = [
         ./patches/mode-selection-changed.patch
         ./patches/universal-password-flag.patch
+        ./patches/mode-preprocess-input-on-blank-input.patch
       ];
     }))
     pango

@@ -1,0 +1,20 @@
+diff --git a/source/view.c b/source/view.c
+index 143b5af9..dabfbfb0 100644
+--- a/source/view.c
++++ b/source/view.c
+@@ -1409,11 +1409,14 @@ static gboolean rofi_view_refilter_real(RofiViewState *state) {
+     state->tokens = NULL;
+   }
+   TICK_N("Filter tokenize");
++  gchar *pattern;
++  if (state->text) {
++    pattern = mode_preprocess_input(state->sw, state->text->text);
++  }
+   if (state->text && strlen(state->text->text) > 0) {
+ 
+     listview_set_filtered(state->list_view, TRUE);
+     unsigned int j = 0;
+-    gchar *pattern = mode_preprocess_input(state->sw, state->text->text);
+     glong plen = pattern ? g_utf8_strlen(pattern, -1) : 0;
+     state->tokens = helper_tokenize(pattern, config.case_sensitive);
+     /**

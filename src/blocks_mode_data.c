@@ -85,7 +85,6 @@ BlocksModePrivateData* blocks_mode_private_data_new() {
     pd->cmd_pid = 0;
     pd->buffer = g_string_sized_new(1024);
     pd->active_line = g_string_sized_new(1024);
-    pd->waiting_for_idle = FALSE;
     pd->parser = json_parser_new();
     return pd;
 }

@@ -245,38 +245,6 @@ static void on_child_status(GPid pid, gint status, gpointer context) {
     }
 }
 
-// idle, called after rendering
-static void on_render(gpointer context) {
-    g_debug("%s", "calling on_render");
-
-    Mode* sw = (Mode*) context;
-    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    RofiViewState* state = rofi_view_get_active();
-
-    /**
-     * Mode._preprocess_input is not called when input is empty, the only method
-     * called when the input changes to empty is blocks_mode_get_display_value
-     * which later this method is called, that is reason the following 3 lines
-     * are added.
-     */
-    if (state) {
-        blocks_mode_verify_input_change(data, rofi_view_get_user_input(state));
-        g_debug("%s %i", "on_render.selected line", rofi_view_get_selected_line(state));
-        g_debug("%s %i", "on_render.next pos", rofi_view_get_next_position(state));
-        g_debug("%s %i", "on_render.active line", blocks_mode_rofi_view_get_current_position(state, data->currentPageData));
-    }
-}
-
-// function used on g_idle_add, it is here to guarantee that this is called once
-// each time the mode content is rendered
-static gboolean on_render_callback(gpointer context) {
-    on_render(context);
-    Mode* sw = (Mode*) context;
-    BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    data->waiting_for_idle = FALSE;
-    return FALSE;
-}
-
 
 /************************
  extended mode methods
@@ -453,11 +421,6 @@ static void blocks_mode_destroy(Mode* sw) {
 
 static char* blocks_mode_get_display_value(const Mode* sw, unsigned int selected_line, int* state, G_GNUC_UNUSED GList** attr_list, int get_entry) {
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    if (!data->waiting_for_idle) {
-        data->waiting_for_idle = TRUE;
-        g_idle_add(on_render_callback, (void*) sw);
-    }
-
     PageData* page = mode_get_private_data_current_page(sw);
     LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
     if (line == NULL) {
