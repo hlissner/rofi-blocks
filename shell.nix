@@ -26,6 +26,8 @@ mkShell {
         # Add new mode function: _selection_changed, to be called whenever the
         # active row changes.
         ./patches/mode-selection-changed.patch
+        # Adds a function to change case sensitivity on-the-fly.
+        ./patches/rofi-view-set-case-sensitive.patch
         # Support -password option
         ./patches/universal-password-flag.patch
       ];

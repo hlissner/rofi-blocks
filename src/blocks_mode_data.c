@@ -21,7 +21,9 @@ static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, 
 
 
 static void blocks_mode_private_data_update_case_sensitivity(BlocksModePrivateData* data) {
-    data->currentPageData->case_sensitive = json_object_get_boolean_member_or_else(data->root, "case_sensitive", data->currentPageData->case_sensitive);
+    data->currentPageData->case_sensitive = json_object_get_boolean_member_or_else(
+        data->root, "case_sensitive", data->currentPageData->case_sensitive
+    );
 }
 
 static void blocks_mode_private_data_update_filter(BlocksModePrivateData* data) {

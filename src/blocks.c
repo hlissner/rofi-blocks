@@ -29,6 +29,7 @@ typedef struct RofiViewState RofiViewState;
 void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
 RofiViewState* rofi_view_get_active(void);
 extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
+extern void rofi_view_set_case_sensitive(RofiViewState* state, unsigned int case_sensitive);
 extern void rofi_view_reload(void);
 const char* rofi_view_get_user_input(const RofiViewState* state);
 unsigned int rofi_view_get_selected_line(const RofiViewState* state);
@@ -174,6 +175,7 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
         GString* old_input = input ? g_string_new(input->str) : NULL;
         GString* old_filter = filter ? g_string_new(filter->str) : NULL;
+        gboolean old_case_sensitive = data->currentPageData->case_sensitive;
 
         blocks_mode_private_data_update_page(data);
 
@@ -181,16 +183,19 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* new_prompt = data->currentPageData->prompt;
         GString* new_input = data->currentPageData->input;
         GString* new_filter = data->currentPageData->filter;
+        gboolean new_case_sensitive = data->currentPageData->case_sensitive;
 
         RofiViewState* state = rofi_view_get_active();
 
-        if (!page_data_is_string_equal(old_filter, new_filter)) {
-            if (data->tokens != NULL) {
+        if ((old_case_sensitive != new_case_sensitive)
+            || (!page_data_is_string_equal(old_filter, new_filter))) {
+            if (data->tokens) {
                 helper_tokenize_free(data->tokens);
             }
             data->tokens = new_filter == NULL
                 ? NULL
-                : helper_tokenize(new_filter->str, data->currentPageData->case_sensitive);
+                : helper_tokenize(new_filter->str, new_case_sensitive);
+            rofi_view_set_case_sensitive(state, new_case_sensitive);
         }
 
         if (!page_data_is_string_equal(old_overlay, new_overlay)) {
