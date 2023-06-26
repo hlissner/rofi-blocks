@@ -18,6 +18,7 @@ typedef struct {
     gboolean case_sensitive;
     GString* message;
     GString* overlay;
+    GString* placeholder;
     GString* prompt;
     GString* input;
     GString* filter;

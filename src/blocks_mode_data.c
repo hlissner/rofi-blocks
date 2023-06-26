@@ -26,6 +26,10 @@ static void blocks_mode_private_data_update_case_sensitivity(BlocksModePrivateDa
     );
 }
 
+static void blocks_mode_private_data_update_placeholder(BlocksModePrivateData* data) {
+    blocks_mode_private_data_update_string(data, &data->currentPageData->placeholder, "placeholder", FALSE);
+}
+
 static void blocks_mode_private_data_update_filter(BlocksModePrivateData* data) {
     blocks_mode_private_data_update_string(data, &data->currentPageData->filter, "filter", TRUE);
 }
@@ -123,6 +127,7 @@ void blocks_mode_private_data_update_page(BlocksModePrivateData* data){
     data->root = json_node_get_object(json_parser_get_root(data->parser));
 
     blocks_mode_private_data_update_case_sensitivity(data);
+    blocks_mode_private_data_update_placeholder(data);
     blocks_mode_private_data_update_filter(data);
     blocks_mode_private_data_update_message(data);
     blocks_mode_private_data_update_overlay(data);

@@ -29,6 +29,7 @@ typedef struct RofiViewState RofiViewState;
 void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
 RofiViewState* rofi_view_get_active(void);
 extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
+extern void rofi_view_set_placeholder(RofiViewState* state, const char* text);
 extern void rofi_view_set_case_sensitive(RofiViewState* state, unsigned int case_sensitive);
 extern void rofi_view_reload(void);
 const char* rofi_view_get_user_input(const RofiViewState* state);
@@ -168,11 +169,13 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
 
         GString* overlay = data->currentPageData->overlay;
         GString* prompt = data->currentPageData->prompt;
+        GString* placeholder = data->currentPageData->placeholder;
         GString* input = data->currentPageData->input;
         GString* filter = data->currentPageData->filter;
 
         GString* old_overlay = overlay ? g_string_new(overlay->str) : NULL;
         GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
+        GString* old_placeholder = placeholder ? g_string_new(placeholder->str) : NULL;
         GString* old_input = input ? g_string_new(input->str) : NULL;
         GString* old_filter = filter ? g_string_new(filter->str) : NULL;
         gboolean old_case_sensitive = data->currentPageData->case_sensitive;
@@ -181,6 +184,7 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
 
         GString* new_overlay = data->currentPageData->overlay;
         GString* new_prompt = data->currentPageData->prompt;
+        GString* new_placeholder = data->currentPageData->placeholder;
         GString* new_input = data->currentPageData->input;
         GString* new_filter = data->currentPageData->filter;
         gboolean new_case_sensitive = data->currentPageData->case_sensitive;
@@ -207,6 +211,10 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
             sw->display_name = g_strdup(new_prompt->str);
             // rofi_view_reload does not update prompt, that is why this is needed
             rofi_view_switch_mode(state, sw);
+        }
+
+        if (!page_data_is_string_equal(old_placeholder, new_placeholder)) {
+            rofi_view_set_placeholder(state, (new_placeholder->len > 0) ? new_placeholder->str : NULL);
         }
 
         if (!page_data_is_string_equal(old_input, new_input)) {

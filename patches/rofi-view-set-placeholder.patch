@@ -1,0 +1,43 @@
+diff --git a/include/view.h b/include/view.h
+index 59e28c3d..ab309d3b 100644
+--- a/include/view.h
++++ b/include/view.h
+@@ -288,6 +288,14 @@ void rofi_view_set_case_sensitive(RofiViewState *state, unsigned int case_sensit
+  */
+ void rofi_view_set_overlay(RofiViewState *state, const char *text);
+ 
++/**
++ * @param state The handle to the view
++ * @param text An UTF-8 encoded character array with the placeholder text
++ *
++ * Changes the placeholder text.
++ */
++void rofi_view_set_placeholder(RofiViewState *state, const char *text);
++
+ /**
+  * @param state The handle to the view.
+  *
+diff --git a/source/view.c b/source/view.c
+index 5282056f..3d45491a 100644
+--- a/source/view.c
++++ b/source/view.c
+@@ -2677,6 +2677,19 @@ void rofi_view_set_overlay(RofiViewState *state, const char *text) {
+   rofi_view_queue_redraw();
+ }
+ 
++void rofi_view_set_placeholder(RofiViewState *state, const char *text) {
++  if (state->text != NULL) {
++    if (state->text->placeholder != NULL) {
++      g_free(state->text->placeholder);
++    }
++    state->text->placeholder = rofi_theme_get_boolean(WIDGET(state->text), "placeholder-markup", FALSE)
++      ? g_strdup(text)
++      : g_markup_escape_text(text, -1);
++    textbox_text(state->text, g_strdup(state->text->text));  // Trigger refresh
++    rofi_view_queue_redraw();
++  }
++}
++
+ void rofi_view_clear_input(RofiViewState *state) {
+   if (state->text) {
+     textbox_text(state->text, "");

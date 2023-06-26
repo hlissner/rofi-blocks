@@ -123,6 +123,7 @@ An output payload contains only the Rofi state you want changed. For example:
 | lines          | A list of strings or json objects representing rofi's listview content                                                                                                       |
 | message        | Sets Rofi message, hides it if empty or null                                                                                                                                 |
 | overlay        | Shows overlay with text, hides it if empty or null                                                                                                                           |
+| placeholder    | Sets the input text while it is empty                                                                                                                                        |
 | prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                           |
 
 ### Line properties

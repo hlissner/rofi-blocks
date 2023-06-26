@@ -11,6 +11,7 @@ PageData* page_data_new() {
     page->message = NULL;
     page->overlay = NULL;
     page->prompt = NULL;
+    page->placeholder = NULL;
     page->filter = NULL;
     page->case_sensitive = FALSE;
     page->input = g_string_sized_new(256);
@@ -23,6 +24,7 @@ void page_data_destroy(PageData* page) {
     page->message != NULL && g_string_free(page->message, TRUE);
     page->overlay != NULL && g_string_free(page->overlay, TRUE);
     page->prompt != NULL && g_string_free(page->prompt, TRUE);
+    page->placeholder != NULL && g_string_free(page->placeholder, TRUE);
     page->filter != NULL && g_string_free(page->filter, TRUE);
     g_string_free(page->input, TRUE);
     g_array_free(page->lines, TRUE);
