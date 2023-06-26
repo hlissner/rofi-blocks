@@ -20,13 +20,14 @@ mkShell {
         fetchSubmodules = true;
       };
       patches = [
-        # Add new mode function, _selection_changed, to be called whenever the
+        # Call mode_preprocess_input even when input is empty, and operate on
+        # its returned pattern, if available.
+        ./patches/mode-preprocess-input.patch
+        # Add new mode function: _selection_changed, to be called whenever the
         # active row changes.
         ./patches/mode-selection-changed.patch
         # Support -password option
         ./patches/universal-password-flag.patch
-        # Always call mode_preprocess_input, even when input is empty
-        ./patches/mode-preprocess-input-on-blank-input.patch
       ];
     }))
     pango

@@ -116,15 +116,6 @@ void blocks_mode_private_data_write_to_channel(BlocksModePrivateData* data, Even
     g_free(format_result);
 }
 
-void blocks_mode_verify_input_change(BlocksModePrivateData* data, const char* new_input) {
-    PageData* page = data->currentPageData;
-    GString* input = page->input;
-    if (g_strcmp0(input->str, new_input) != 0) {
-        g_string_assign(input, new_input);
-        blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input, "");
-    }
-}
-
 
 /**************************
   mode extension methods
@@ -467,11 +458,16 @@ static char* blocks_mode_get_message(const Mode* sw) {
     return result;
 }
 
-static char* blocks_mode_preprocess_input(Mode* sw, const char* input) {
+static char* blocks_mode_preprocess_input(Mode* sw, const char* new_input) {
     g_debug("%s", "blocks_mode_preprocess_input");
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    blocks_mode_verify_input_change(data, input);
-    return g_strdup(input);
+    PageData* page = data->currentPageData;
+    GString* input = page->input;
+    if (g_strcmp0(input->str, new_input) != 0) {
+        g_string_assign(input, new_input);
+        blocks_mode_private_data_write_to_channel(data, Event__INPUT_CHANGE, new_input, "");
+    }
+    return g_strdup((page->filter == NULL ? input : page->filter)->str);
 }
 
 static void blocks_mode_selection_changed(Mode* sw, unsigned int index, unsigned int relative_index) {
