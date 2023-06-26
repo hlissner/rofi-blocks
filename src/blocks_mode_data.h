@@ -17,7 +17,6 @@
 #include <rofi/helper.h>
 
 #include "string_utils.h"
-#include "render_state.h"
 #include "page_data.h"
 #include "json_glib_extensions.h"
 
@@ -40,8 +39,6 @@ typedef struct {
     int write_channel_fd;
     int read_channel_fd;
     guint read_channel_watcher;
-
-    RenderState* render_state;
 } BlocksModePrivateData;
 
 BlocksModePrivateData* blocks_mode_private_data_new();

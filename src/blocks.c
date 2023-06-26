@@ -19,7 +19,6 @@
 #include <stdint.h>
 
 #include "string_utils.h"
-#include "render_state.h"
 #include "page_data.h"
 #include "json_glib_extensions.h"
 #include "blocks_mode_data.h"
