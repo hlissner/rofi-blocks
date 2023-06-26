@@ -440,10 +440,17 @@ static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, un
     PageData* page = data->currentPageData;
     LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
     if (line == NULL) { return FALSE; }
-    if (!line->filter) { return FALSE; }
-
-    if (data->tokens != NULL) { tokens = data->tokens; }
-    if (!line->markup) { return helper_token_match(tokens, line->text); }
+    if (line->filter == FALSE) { return TRUE; }
+    if (data->tokens == NULL) {
+        if (page->filter != NULL && page->filter->str[0] == '\0') {
+            return TRUE;
+        }
+    } else {
+        tokens = data->tokens;
+    }
+    if (!line->markup) {
+        return helper_token_match(tokens, line->text);
+    }
     // Strip out markup when matching
     char* esc = NULL;
     pango_parse_markup(line->text, -1, 0, NULL, &esc, NULL, NULL);
