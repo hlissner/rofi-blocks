@@ -448,12 +448,15 @@ static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, un
     } else {
         tokens = data->tokens;
     }
-    if (!line->markup) {
-        return helper_token_match(tokens, line->text);
+    gchar* text = line->text;
+    if (line->metatext != NULL) {
+        text = line->metatext;
+    } else if (!line->markup) {
+        return helper_token_match(tokens, text);
     }
     // Strip out markup when matching
     char* esc = NULL;
-    pango_parse_markup(line->text, -1, 0, NULL, &esc, NULL, NULL);
+    pango_parse_markup(text, -1, 0, NULL, &esc, NULL, NULL);
     return helper_token_match(tokens, esc);
 }
 

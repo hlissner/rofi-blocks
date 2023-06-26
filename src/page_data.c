@@ -107,6 +107,7 @@ LineData* page_data_get_line_by_index_or_else(PageData* page, unsigned int index
 
 void page_data_add_line(PageData* page,
                         const gchar* label,
+                        const gchar* metatext,
                         const gchar* icon,
                         const gchar* data,
                         gboolean urgent,
@@ -116,6 +117,7 @@ void page_data_add_line(PageData* page,
                         gboolean filter) {
     LineData line = {
         .text = g_strdup(label),
+        .metatext = g_strdup(metatext),
         .icon = g_strdup(icon),
         .data = g_strdup(data),
         .urgent = urgent,
@@ -129,10 +131,11 @@ void page_data_add_line(PageData* page,
 
 void page_data_add_line_json_node(PageData* page, JsonNode* node) {
     if (JSON_NODE_HOLDS_VALUE(node) && json_node_get_value_type(node) == G_TYPE_STRING) {
-        page_data_add_line(page, json_node_get_string(node), EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, page->markup_default == MarkupStatus_ENABLED, FALSE, TRUE);
+        page_data_add_line(page, json_node_get_string(node), NULL, EMPTY_STRING, EMPTY_STRING, FALSE, FALSE, page->markup_default == MarkupStatus_ENABLED, FALSE, TRUE);
     } else if (JSON_NODE_HOLDS_OBJECT(node)) {
         JsonObject* line_obj = json_node_get_object(node);
         const gchar* text = json_object_get_string_member_or_else(line_obj, "text", EMPTY_STRING);
+        const gchar* metatext = json_object_get_string_member_or_else(line_obj, "metatext", NULL);
         const gchar* icon = json_object_get_string_member_or_else(line_obj, "icon", EMPTY_STRING);
         const gchar* data = json_object_get_string_member_or_else(line_obj, "data", EMPTY_STRING);
         gboolean urgent = json_object_get_boolean_member_or_else(line_obj, "urgent", FALSE);
@@ -140,7 +143,7 @@ void page_data_add_line_json_node(PageData* page, JsonNode* node) {
         gboolean markup = json_object_get_boolean_member_or_else(line_obj, "markup", page->markup_default == MarkupStatus_ENABLED);
         gboolean nonselectable = json_object_get_boolean_member_or_else(line_obj, "nonselectable", FALSE);
         gboolean filter = json_object_get_boolean_member_or_else(line_obj, "filter", TRUE);
-        page_data_add_line(page, text, icon, data, urgent, highlight, markup, nonselectable, filter);
+        page_data_add_line(page, text, metatext, icon, data, urgent, highlight, markup, nonselectable, filter);
     }
 }
 
@@ -150,6 +153,7 @@ void page_data_clear_lines(PageData* page) {
     for (int i = 0; i < size; ++i) {
         LineData line = g_array_index(lines, LineData, i);
         g_free(line.text);
+        g_free(line.metatext);
         g_free(line.icon);
         g_free(line.data);
     }
