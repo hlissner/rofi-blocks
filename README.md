@@ -33,6 +33,7 @@
 >   - Renames `input_format` to `event_format`.
 >   - Removes `input_action` and replaces it with `filter` and `case_sensitive`
 >     fields. (Details below)
+>   - Adds a `icon` parameter. (Details below)
 >   - Adds a `filter` parameter to lines. (Details below)
 
 # rofi-blocks
@@ -92,6 +93,7 @@ An output payload contains only the Rofi state you want changed. For example:
   "case_sensitive": false,
   "event_format": "{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}",
   "filter": "",
+  "icon": "",
   "input": "",
   "message": "",
   "overlay": "",
@@ -119,6 +121,7 @@ An output payload contains only the Rofi state you want changed. For example:
 | close_on_exit  | If true, close rofi when the connected process exits                                                                                                                         |
 | event_format   | Format used for events emitted to stdout; details in next section                                                                                                            |
 | filter         | The search query to filter lines against. Set to an empty string to filter nothing, or null to revert to default behavior                                                    |
+| icon           | Changes the icon displayed in the element named "icon". Accepts a icon name or path to image. If null, resets to default icon                                                |
 | input          | Sets input text, to clear use empty string or null                                                                                                                           |
 | lines          | A list of strings or json objects representing rofi's listview content                                                                                                       |
 | message        | Sets Rofi message, hides it if empty or null                                                                                                                                 |

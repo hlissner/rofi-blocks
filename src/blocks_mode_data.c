@@ -19,6 +19,9 @@ static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, 
     }
 }
 
+static void blocks_mode_private_data_update_icon(BlocksModePrivateData* data) {
+    blocks_mode_private_data_update_string(data, &data->currentPageData->icon, "icon", TRUE);
+}
 
 static void blocks_mode_private_data_update_case_sensitivity(BlocksModePrivateData* data) {
     data->currentPageData->case_sensitive = json_object_get_boolean_member_or_else(
@@ -126,6 +129,7 @@ void blocks_mode_private_data_update_page(BlocksModePrivateData* data){
 
     data->root = json_node_get_object(json_parser_get_root(data->parser));
 
+    blocks_mode_private_data_update_icon(data);
     blocks_mode_private_data_update_case_sensitivity(data);
     blocks_mode_private_data_update_placeholder(data);
     blocks_mode_private_data_update_filter(data);

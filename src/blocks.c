@@ -27,6 +27,7 @@
 typedef struct RofiViewState RofiViewState;
 void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
 RofiViewState* rofi_view_get_active(void);
+extern uint32_t rofi_view_set_icon(RofiViewState *state, const char *icon, gboolean preload);
 extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
 extern void rofi_view_set_placeholder(RofiViewState* state, const char* text);
 extern void rofi_view_set_case_sensitive(RofiViewState* state, unsigned int case_sensitive);
@@ -135,6 +136,12 @@ static PageData* mode_get_private_data_current_page(const Mode* sw) {
  main loop sources
 ********************/
 
+static void on_icon_retry(gpointer context) {
+    PageData *page = (PageData *) context;
+    RofiViewState* state = rofi_view_get_active();
+    rofi_view_set_icon(state, page->icon != NULL ? page->icon->str : NULL, FALSE);
+}
+
 static gboolean next_line(BlocksModePrivateData* data, GIOChannel* source, GIOCondition condition, gpointer context) {
     GString* buffer = data->buffer;
     GString* active_line = data->active_line;
@@ -169,12 +176,14 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* overlay = data->currentPageData->overlay;
         GString* prompt = data->currentPageData->prompt;
         GString* placeholder = data->currentPageData->placeholder;
+        GString* icon = data->currentPageData->icon;
         GString* input = data->currentPageData->input;
         GString* filter = data->currentPageData->filter;
 
         GString* old_overlay = overlay ? g_string_new(overlay->str) : NULL;
         GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
         GString* old_placeholder = placeholder ? g_string_new(placeholder->str) : NULL;
+        GString* old_icon = icon ? g_string_new(icon->str) : NULL;
         GString* old_input = input ? g_string_new(input->str) : NULL;
         GString* old_filter = filter ? g_string_new(filter->str) : NULL;
         gboolean old_case_sensitive = data->currentPageData->case_sensitive;
@@ -184,11 +193,21 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* new_overlay = data->currentPageData->overlay;
         GString* new_prompt = data->currentPageData->prompt;
         GString* new_placeholder = data->currentPageData->placeholder;
+        GString* new_icon = data->currentPageData->icon;
         GString* new_input = data->currentPageData->input;
         GString* new_filter = data->currentPageData->filter;
         gboolean new_case_sensitive = data->currentPageData->case_sensitive;
 
         RofiViewState* state = rofi_view_get_active();
+
+        if (!page_data_is_string_equal(old_icon, new_icon)) {
+            if (rofi_view_set_icon(state, new_icon ? new_icon->str : NULL, FALSE) != 0) {
+                // Icons are fetched asynchronously and may not be immediately
+                // available. rofi_view_set_icon returns non-zero if this is the
+                // case (or the icon wasn't found), so try again shortly after:
+                g_idle_add(G_SOURCE_FUNC(on_icon_retry), (void*) data->currentPageData);
+            }
+        }
 
         if ((old_case_sensitive != new_case_sensitive)
             || (!page_data_is_string_equal(old_filter, new_filter))) {

@@ -20,6 +20,7 @@ typedef struct {
     GString* overlay;
     GString* placeholder;
     GString* prompt;
+    GString* icon;
     GString* input;
     GString* filter;
     GArray* lines;

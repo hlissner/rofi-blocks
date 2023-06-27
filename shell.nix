@@ -28,6 +28,9 @@ mkShell {
         ./patches/mode-selection-changed.patch
         # Adds a function to change case sensitivity on-the-fly.
         ./patches/rofi-view-set-case-sensitive.patch
+        # Adds a function to preload icons, and change the "icon" widget's icon
+        # on-the-fly.
+        ./patches/rofi-view-set-icon.patch
         # Adds a function to change placeholder on-the-fly
         ./patches/rofi-view-set-placeholder.patch
         # Support -password option

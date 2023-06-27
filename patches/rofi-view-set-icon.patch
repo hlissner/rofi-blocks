@@ -1,0 +1,84 @@
+diff --git a/include/view-internal.h b/include/view-internal.h
+index b6738a57..e6f383b8 100644
+--- a/include/view-internal.h
++++ b/include/view-internal.h
+@@ -111,6 +111,8 @@ struct RofiViewState {
+   textbox *tb_current_entry;
+   /** Extra icon widget that shows the current selected entries icon. */
+   icon *icon_current_entry;
++  /** Extra icon widget for static branding */
++  icon *icon;
+ 
+   /** Settings of the menu */
+   MenuFlags menu_flags;
+diff --git a/include/view.h b/include/view.h
+index ab309d3b..6887263e 100644
+--- a/include/view.h
++++ b/include/view.h
+@@ -280,6 +280,15 @@ void rofi_view_switch_mode(RofiViewState *state, Mode *mode);
+  */
+ void rofi_view_set_case_sensitive(RofiViewState *state, unsigned int case_sensitive);
+ 
++/**
++ * @param state The handle to the view
++ * @param icon The icon name or file path. If NULL, revert to default icon.
++ * @param preload If true, load the icon into memory and don't change the icon
++ *
++ * Changes (or preloads) the icon of the "icon" widget.
++ */
++uint32_t rofi_view_set_icon(RofiViewState *state, const char *icon, gboolean preload);
++
+ /**
+  * @param state The handle to the view
+  * @param text An UTF-8 encoded character array with the text to overlay.
+diff --git a/source/view.c b/source/view.c
+index d50fc36f..a99f6fde 100644
+--- a/source/view.c
++++ b/source/view.c
+@@ -73,6 +73,8 @@
+ 
+ #include "xcb.h"
+ 
++#include "rofi-icon-fetcher.h"
++
+ /**
+  * @param state The handle to the view
+  * @param qr    Indicate if queue_redraw should be called on changes.
+@@ -2274,6 +2276,10 @@ static void rofi_view_add_widget(RofiViewState *state, widget *parent_widget,
+     state->icon_current_entry = icon_create(parent_widget, name);
+     box_add((box *)parent_widget, WIDGET(state->icon_current_entry), FALSE);
+     defaults = NULL;
++  } else if (strcmp(name, "icon") == 0) {
++    state->icon = icon_create(parent_widget, name);
++    box_add((box *)parent_widget, WIDGET(state->icon), FALSE);
++    defaults = NULL;
+   }
+   /**
+    * CASE INDICATOR
+@@ -2663,6 +2669,26 @@ void rofi_view_set_case_sensitive(RofiViewState *state, unsigned int case_sensit
+   }
+ }
+ 
++uint32_t rofi_view_set_icon(RofiViewState *state, const char *icon_name, gboolean preload) {
++  if (state->icon == NULL) return 0;
++  int icon_height =
++    widget_get_desired_height(WIDGET(state->icon),
++                              WIDGET(state->icon)->w);
++  if (icon_name == NULL) {
++    icon_name = rofi_theme_get_string(WIDGET(state->icon), "filename", NULL);
++  }
++  if (icon_name == NULL) { return 0; }
++  const uint32_t uid = rofi_icon_fetcher_query(icon_name, icon_height);
++  if (!preload) {
++    cairo_surface_t* icon = rofi_icon_fetcher_get(uid);
++    if (icon != NULL) {
++      icon_set_surface(state->icon, icon);
++      return 0;
++    }
++  }
++  return uid;
++}
++
+ void rofi_view_set_overlay(RofiViewState *state, const char *text) {
+   if (state->overlay == NULL || state->list_view == NULL) {
+     return;
