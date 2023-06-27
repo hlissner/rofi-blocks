@@ -266,8 +266,7 @@ static int blocks_mode_init(Mode* sw) {
         pd->event_format = g_string_new(format);
     }
 
-    char* cmd = NULL;
-    if (find_arg_str(CmdArg__MARKUP_ROWS, &cmd)) {
+    if (find_arg(CmdArg__MARKUP_ROWS)) {
         pd->currentPageData->markup_default = MarkupStatus_ENABLED;
     }
 
@@ -276,6 +275,7 @@ static int blocks_mode_init(Mode* sw) {
         sw->display_name = g_strdup(prompt);
     }
 
+    char* cmd = NULL;
     if (find_arg_str(CmdArg__BLOCKS_WRAP, &cmd)) {
         GError* error = NULL;
         int cmd_input_fd;
