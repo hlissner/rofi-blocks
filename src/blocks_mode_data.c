@@ -7,15 +7,13 @@ static const char* UNDEFINED = "";
 
 
 static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, GString** str, const char* json_root_member, gboolean allow_null) {
-    if (data->root != NULL) {
-        JsonNode* node = json_object_get_member(data->root, json_root_member);
-        if (node == NULL) {
-            return;
-        } else if (json_node_is_null(node)) {
-            page_data_set_string_member(str, allow_null ? NULL : "");
-        } else if (json_node_get_value_type(node) == G_TYPE_STRING) {
-            page_data_set_string_member(str, json_node_get_string(node));
-        }
+    JsonNode* node = json_object_get_member(data->root, json_root_member);
+    if (node == NULL) {
+        return;
+    } else if (json_node_is_null(node)) {
+        page_data_set_string_member(str, allow_null ? NULL : "");
+    } else if (json_node_get_value_type(node) == G_TYPE_STRING) {
+        page_data_set_string_member(str, json_node_get_string(node));
     }
 }
 
