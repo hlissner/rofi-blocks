@@ -6,7 +6,7 @@
 static const char* UNDEFINED = "";
 
 
-static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, GString** str, const char* json_root_member, bool allow_null) {
+static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, GString** str, const char* json_root_member, gboolean allow_null) {
     if (data->root != NULL) {
         JsonNode* node = json_object_get_member(data->root, json_root_member);
         if (node == NULL) {
