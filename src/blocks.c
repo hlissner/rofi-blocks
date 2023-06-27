@@ -128,7 +128,7 @@ static BlocksModePrivateData* mode_get_private_data_extended_mode(const Mode* sw
 }
 
 static PageData* mode_get_private_data_current_page(const Mode* sw) {
-    return mode_get_private_data_extended_mode(sw)->currentPageData;
+    return mode_get_private_data_extended_mode(sw)->page;
 }
 
 
@@ -173,12 +173,12 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
     while (next_line(data, source, condition, context)) {
         g_debug("handling received line");
 
-        GString* overlay = data->currentPageData->overlay;
-        GString* prompt = data->currentPageData->prompt;
-        GString* placeholder = data->currentPageData->placeholder;
-        GString* icon = data->currentPageData->icon;
-        GString* input = data->currentPageData->input;
-        GString* filter = data->currentPageData->filter;
+        GString* overlay = data->page->overlay;
+        GString* prompt = data->page->prompt;
+        GString* placeholder = data->page->placeholder;
+        GString* icon = data->page->icon;
+        GString* input = data->page->input;
+        GString* filter = data->page->filter;
 
         GString* old_overlay = overlay ? g_string_new(overlay->str) : NULL;
         GString* old_prompt = prompt ? g_string_new(prompt->str) : NULL;
@@ -186,17 +186,17 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         GString* old_icon = icon ? g_string_new(icon->str) : NULL;
         GString* old_input = input ? g_string_new(input->str) : NULL;
         GString* old_filter = filter ? g_string_new(filter->str) : NULL;
-        gboolean old_case_sensitive = data->currentPageData->case_sensitive;
+        gboolean old_case_sensitive = data->page->case_sensitive;
 
         blocks_mode_private_data_update_page(data);
 
-        GString* new_overlay = data->currentPageData->overlay;
-        GString* new_prompt = data->currentPageData->prompt;
-        GString* new_placeholder = data->currentPageData->placeholder;
-        GString* new_icon = data->currentPageData->icon;
-        GString* new_input = data->currentPageData->input;
-        GString* new_filter = data->currentPageData->filter;
-        gboolean new_case_sensitive = data->currentPageData->case_sensitive;
+        GString* new_overlay = data->page->overlay;
+        GString* new_prompt = data->page->prompt;
+        GString* new_placeholder = data->page->placeholder;
+        GString* new_icon = data->page->icon;
+        GString* new_input = data->page->input;
+        GString* new_filter = data->page->filter;
+        gboolean new_case_sensitive = data->page->case_sensitive;
 
         RofiViewState* state = rofi_view_get_active();
 
@@ -205,7 +205,7 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
                 // Icons are fetched asynchronously and may not be immediately
                 // available. rofi_view_set_icon returns non-zero if this is the
                 // case (or the icon wasn't found), so try again shortly after:
-                g_idle_add(G_SOURCE_FUNC(on_icon_retry), (void*) data->currentPageData);
+                g_idle_add(G_SOURCE_FUNC(on_icon_retry), (void*) data->page);
             }
         }
 
@@ -286,7 +286,7 @@ static int blocks_mode_init(Mode* sw) {
     }
 
     if (find_arg(CmdArg__MARKUP_ROWS)) {
-        pd->currentPageData->markup_default = MarkupStatus_ENABLED;
+        pd->page->markup_default = MarkupStatus_ENABLED;
     }
 
     char* prompt = NULL;
@@ -376,7 +376,7 @@ static ModeMode blocks_mode_result(Mode* sw, int mretv, char** input, unsigned i
         return PREVIOUS_DIALOG;
     }
 
-    PageData* page = data->currentPageData;
+    PageData* page = data->page;
     LineData* line;
     if (selected_line >= 0 && selected_line < page->lines->len) {
         line = &g_array_index(page->lines, LineData, selected_line);
@@ -459,7 +459,7 @@ static char* blocks_mode_get_display_value(const Mode* sw, unsigned int selected
 
 static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, unsigned int selected_line) {
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    PageData* page = data->currentPageData;
+    PageData* page = data->page;
     LineData* line = page_data_get_line_by_index_or_else(page, selected_line, NULL);
     if (line == NULL) { return FALSE; }
     if (line->filter == FALSE) { return TRUE; }
@@ -492,7 +492,7 @@ static char* blocks_mode_get_message(const Mode* sw) {
 static char* blocks_mode_preprocess_input(Mode* sw, const char* new_input) {
     g_debug("%s", "blocks_mode_preprocess_input");
     BlocksModePrivateData* data = mode_get_private_data_extended_mode(sw);
-    PageData* page = data->currentPageData;
+    PageData* page = data->page;
     GString* input = page->input;
     if (g_strcmp0(input->str, new_input) != 0) {
         g_string_assign(input, new_input);

@@ -44,14 +44,14 @@ static const char* get_page_data_string_member_or_empty_string(GString* member) 
 
 
 void page_data_set_string_member(GString** member, const char* new_string) {
-    gboolean isDefined = *member != NULL;
-    gboolean willDefine = new_string != NULL;
-    if (isDefined && willDefine) {
+    gboolean is_defined = *member != NULL;
+    gboolean will_define = new_string != NULL;
+    if (is_defined && will_define) {
         g_string_assign(*member, new_string);
-    } else if (isDefined && !willDefine) {
+    } else if (is_defined && !will_define) {
         g_string_free(*member, TRUE);
         *member = NULL;
-    } else if (!isDefined && willDefine) {
+    } else if (!is_defined && will_define) {
         *member = g_string_new(new_string);
     }
     // else do nothing, *member is already NULL

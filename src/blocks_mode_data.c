@@ -18,37 +18,37 @@ static void blocks_mode_private_data_update_string(BlocksModePrivateData* data, 
 }
 
 static void blocks_mode_private_data_update_icon(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->icon, "icon", TRUE);
+    blocks_mode_private_data_update_string(data, &data->page->icon, "icon", TRUE);
 }
 
 static void blocks_mode_private_data_update_case_sensitivity(BlocksModePrivateData* data) {
-    data->currentPageData->case_sensitive = json_object_get_boolean_member_or_else(
-        data->root, "case_sensitive", data->currentPageData->case_sensitive
+    data->page->case_sensitive = json_object_get_boolean_member_or_else(
+        data->root, "case_sensitive", data->page->case_sensitive
     );
 }
 
 static void blocks_mode_private_data_update_placeholder(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->placeholder, "placeholder", FALSE);
+    blocks_mode_private_data_update_string(data, &data->page->placeholder, "placeholder", FALSE);
 }
 
 static void blocks_mode_private_data_update_filter(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->filter, "filter", TRUE);
+    blocks_mode_private_data_update_string(data, &data->page->filter, "filter", TRUE);
 }
 
 static void blocks_mode_private_data_update_message(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->message, "message", TRUE);
+    blocks_mode_private_data_update_string(data, &data->page->message, "message", TRUE);
 }
 
 static void blocks_mode_private_data_update_overlay(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->overlay, "overlay", TRUE);
+    blocks_mode_private_data_update_string(data, &data->page->overlay, "overlay", TRUE);
 }
 
 static void blocks_mode_private_data_update_prompt(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->prompt, "prompt", TRUE);
+    blocks_mode_private_data_update_string(data, &data->page->prompt, "prompt", TRUE);
 }
 
 static void blocks_mode_private_data_update_input(BlocksModePrivateData* data) {
-    blocks_mode_private_data_update_string(data, &data->currentPageData->input, "input", FALSE);
+    blocks_mode_private_data_update_string(data, &data->page->input, "input", FALSE);
 }
 
 static void blocks_mode_private_data_update_event_format(BlocksModePrivateData* data) {
@@ -67,7 +67,7 @@ static void blocks_mode_private_data_update_close_on_child_exit(BlocksModePrivat
 
 static void blocks_mode_private_data_update_lines(BlocksModePrivateData* data) {
     JsonObject* root = data->root;
-    PageData* page = data->currentPageData;
+    PageData* page = data->page;
     const char* LINES_PROP = "lines";
     if (json_object_has_member(root, LINES_PROP)) {
         JsonArray* lines = json_object_get_array_member(data->root, LINES_PROP);
@@ -83,8 +83,8 @@ static void blocks_mode_private_data_update_lines(BlocksModePrivateData* data) {
 
 BlocksModePrivateData* blocks_mode_private_data_new() {
     BlocksModePrivateData* pd = g_malloc0(sizeof(*pd));
-    pd->currentPageData = page_data_new();
-    pd->currentPageData->markup_default = MarkupStatus_UNDEFINED;
+    pd->page = page_data_new();
+    pd->page->markup_default = MarkupStatus_UNDEFINED;
     pd->event_format = g_string_new("{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}");
     pd->entry_to_focus = -1;
     pd->tokens = NULL;
@@ -109,7 +109,7 @@ void blocks_mode_private_data_update_destroy(BlocksModePrivateData* data){
     if (data->tokens) {
         helper_tokenize_free(data->tokens);
     }
-    page_data_destroy(data->currentPageData);
+    page_data_destroy(data->page);
     close(data->write_channel_fd);
     close(data->read_channel_fd);
     g_free(data->write_channel);

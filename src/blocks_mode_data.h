@@ -21,7 +21,7 @@
 #include "json_glib_extensions.h"
 
 typedef struct {
-    PageData* currentPageData;
+    PageData* page;
     GString* event_format;
     gint64 entry_to_focus;
     rofi_int_matcher **tokens;
