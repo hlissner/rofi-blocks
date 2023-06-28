@@ -224,13 +224,6 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
             rofi_view_set_overlay(state, (new_overlay->len > 0) ? new_overlay->str : NULL);
         }
 
-        if (!page_data_is_string_equal(old_prompt, new_prompt)) {
-            g_free(sw->display_name);
-            sw->display_name = g_strdup(new_prompt->str);
-            // rofi_view_reload does not update prompt, that is why this is needed
-            rofi_view_switch_mode(state, sw);
-        }
-
         if (!page_data_is_string_equal(old_placeholder, new_placeholder)) {
             rofi_view_set_placeholder(state, (new_placeholder->len > 0) ? new_placeholder->str : NULL);
         }
@@ -238,6 +231,13 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         if (!page_data_is_string_equal(old_input, new_input)) {
             rofi_view_clear_input(state);
             rofi_view_handle_text(state, new_input->str);
+        }
+
+        if (!page_data_is_string_equal(old_prompt, new_prompt)) {
+            g_free(sw->display_name);
+            sw->display_name = g_strdup(new_prompt->str);
+            // rofi_view_reload does not update prompt, that is why this is needed
+            rofi_view_switch_mode(state, sw);
         }
 
         if (data->entry_to_focus >= 0) {
