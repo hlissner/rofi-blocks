@@ -247,7 +247,10 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
 
         old_overlay && g_string_free(old_overlay, TRUE);
         old_prompt && g_string_free(old_prompt, TRUE);
+        old_placeholder && g_string_free(old_placeholder, TRUE);
+        old_icon && g_string_free(old_icon, TRUE);
         old_input && g_string_free(old_input, TRUE);
+        old_filter && g_string_free(old_filter, TRUE);
 
         g_debug("reloading rofi view");
         rofi_view_reload();
