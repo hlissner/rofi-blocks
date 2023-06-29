@@ -31,6 +31,7 @@
 >       changed.
 > - Input parameters:
 >   - Renames `input_format` to `event_format`.
+>   - Renames `active_entry` to `active_line`.
 >   - Removes `input_action` and replaces it with `filter` and `case_sensitive`
 >     fields. (Details below)
 >   - Adds a `icon` parameter. (Details below)
@@ -89,7 +90,7 @@ All payloads are formatted as JSON, but this can be changed.
 An output payload contains only the Rofi state you want changed. For example:
 ```json
 {
-  "active_entry": 0,
+  "active_line": 0,
   "case_sensitive": false,
   "event_format": "{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}",
   "filter": "",
@@ -114,20 +115,20 @@ An output payload contains only the Rofi state you want changed. For example:
 ```
 
 ### Output properties
-| Property       | Description                                                                                                                                                                  |
-|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| active_entry   | Zero-based index of the entry to select: <br> - a value equal or larger than the number of lines will focus the last entry. <br> - negative or floating numbers are ignored. |
-| case_sensitive | If true, filtering is case sensitive                                                                                                                                         |
-| close_on_exit  | If true, close rofi when the connected process exits                                                                                                                         |
-| event_format   | Format used for events emitted to stdout; details in next section                                                                                                            |
-| filter         | The search query to filter lines against. Set to an empty string to filter nothing, or null to revert to default behavior                                                    |
-| icon           | Changes the icon displayed in the element named "icon". Accepts a icon name or path to image. If null, resets to default icon                                                |
-| input          | Sets input text, to clear use empty string or null                                                                                                                           |
-| lines          | A list of strings or json objects representing rofi's listview content                                                                                                       |
-| message        | Sets Rofi message, hides it if empty or null                                                                                                                                 |
-| overlay        | Shows overlay with text, hides it if empty or null                                                                                                                           |
-| placeholder    | Sets the input text while it is empty                                                                                                                                        |
-| prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                           |
+| Property       | Description                                                                                                                                                                        |
+|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| active_line    | Zero-based index of the screen line to select: <br> - a value equal or larger than the number of lines will focus the last entry. <br> - negative or floating numbers are ignored. |
+| case_sensitive | If true, filtering is case sensitive                                                                                                                                               |
+| close_on_exit  | If true, close rofi when the connected process exits                                                                                                                               |
+| event_format   | Format used for events emitted to stdout; details in next section                                                                                                                  |
+| filter         | The search query to filter lines against. Set to an empty string to filter nothing, or null to revert to default behavior                                                          |
+| icon           | Changes the icon displayed in the element named "icon". Accepts a icon name or path to image. If null, resets to default icon                                                      |
+| input          | Sets input text, to clear use empty string or null                                                                                                                                 |
+| lines          | A list of strings or json objects representing rofi's listview content                                                                                                             |
+| message        | Sets Rofi message, hides it if empty or null                                                                                                                                       |
+| overlay        | Shows overlay with text, hides it if empty or null                                                                                                                                 |
+| placeholder    | Sets the input text while it is empty                                                                                                                                              |
+| prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                                 |
 
 ### Line properties
 | Property      | Description                                                                  |
