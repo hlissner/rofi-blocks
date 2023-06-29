@@ -36,7 +36,6 @@ extern void rofi_view_reload(void);
 const char* rofi_view_get_user_input(const RofiViewState* state);
 unsigned int rofi_view_get_selected_line(const RofiViewState* state);
 void rofi_view_set_selected_line(const RofiViewState* state, unsigned int selected_line);
-unsigned int rofi_view_get_next_position(const RofiViewState* state);
 void rofi_view_trigger_action_by_name(RofiViewState *state, const char *name);
 G_MODULE_EXPORT Mode mode;
 
@@ -77,21 +76,6 @@ static const char* event_enum_labels[] = {
     "CANCEL",
     "EXIT"
 };
-
-
-/**************
- rofi extension
-****************/
-
-unsigned int blocks_mode_rofi_view_get_current_position(RofiViewState* state, PageData* page){
-    unsigned int next_position = rofi_view_get_next_position(state);
-    unsigned int length = page_data_get_number_of_lines(page);
-    if (next_position <= 0 || next_position >= UINT32_MAX - 10) {
-        return length - 1;
-    } else {
-        return next_position - 1;
-    }
-}
 
 
 /**************************************
