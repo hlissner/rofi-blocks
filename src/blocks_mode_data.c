@@ -51,6 +51,10 @@ static void blocks_mode_private_data_update_input(BlocksModePrivateData* data) {
     blocks_mode_private_data_update_string(data, &data->page->input, "input", FALSE);
 }
 
+static void blocks_mode_private_data_update_trigger(BlocksModePrivateData* data) {
+    blocks_mode_private_data_update_string(data, &data->page->trigger, "trigger", TRUE);
+}
+
 static void blocks_mode_private_data_update_event_format(BlocksModePrivateData* data) {
     blocks_mode_private_data_update_string(data, &data->event_format, "event_format", FALSE);
 }
@@ -127,6 +131,7 @@ void blocks_mode_private_data_update_page(BlocksModePrivateData* data){
 
     data->root = json_node_get_object(json_parser_get_root(data->parser));
 
+    blocks_mode_private_data_update_trigger(data);
     blocks_mode_private_data_update_icon(data);
     blocks_mode_private_data_update_case_sensitivity(data);
     blocks_mode_private_data_update_placeholder(data);

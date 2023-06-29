@@ -33,6 +33,8 @@ mkShell {
         ./patches/rofi-view-set-icon.patch
         # Adds a function to change placeholder on-the-fly
         ./patches/rofi-view-set-placeholder.patch
+        # Adds a function to trigger keybinds by name.
+        ./patches/rofi-view-trigger-action-by-name.patch
         # Support -password option
         ./patches/universal-password-flag.patch
       ];

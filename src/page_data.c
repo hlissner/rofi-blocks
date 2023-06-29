@@ -14,6 +14,7 @@ PageData* page_data_new() {
     page->placeholder = NULL;
     page->filter = NULL;
     page->icon = NULL;
+    page->trigger = NULL;
     page->case_sensitive = FALSE;
     page->input = g_string_sized_new(256);
     page->lines = g_array_new(FALSE, TRUE, sizeof(LineData));
@@ -28,6 +29,7 @@ void page_data_destroy(PageData* page) {
     page->placeholder != NULL && g_string_free(page->placeholder, TRUE);
     page->filter != NULL && g_string_free(page->filter, TRUE);
     page->icon != NULL && g_string_free(page->icon, TRUE);
+    page->trigger != NULL && g_string_free(page->trigger, TRUE);
     g_string_free(page->input, TRUE);
     g_array_free(page->lines, TRUE);
     g_free(page);

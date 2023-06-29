@@ -1,0 +1,38 @@
+diff --git a/include/view.h b/include/view.h
+index d75e7f5e..2e22696a 100644
+--- a/include/view.h
++++ b/include/view.h
+@@ -181,6 +181,13 @@ gboolean rofi_view_check_action(RofiViewState *state, BindingsScope scope,
+ void rofi_view_trigger_action(RofiViewState *state, BindingsScope scope,
+                               guint action);
+ 
++/**
++ * @param state The handle to the view
++ * @param scope The scope of the action
++ * @param action The action
++ */
++void rofi_view_trigger_action_by_name(RofiViewState *state, const char *name);
++
+ /**
+  * @param state The handle to the view
+  *
+diff --git a/source/view.c b/source/view.c
+index 807b0954..3e1a4e44 100644
+--- a/source/view.c
++++ b/source/view.c
+@@ -568,6 +568,15 @@ static void rofi_view_set_user_timeout(G_GNUC_UNUSED gpointer data) {
+   }
+ }
+ 
++void rofi_view_trigger_action_by_name(RofiViewState *state, const char *name) {
++  guint id = key_binding_get_action_from_name(name);
++  if (id != UINT32_MAX) {
++    rofi_view_trigger_action(state, SCOPE_GLOBAL, id);
++  } else {
++    g_warning("Failed to parse keybinding: %s\r\n", name);
++  }
++}
++
+ void rofi_view_reload(void) {
+   // @TODO add check if current view is equal to the callee
+   if (CacheState.idle_timeout == 0) {

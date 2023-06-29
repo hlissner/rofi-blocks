@@ -23,6 +23,7 @@ typedef struct {
     GString* icon;
     GString* input;
     GString* filter;
+    GString* trigger;
     GArray* lines;
 } PageData;
 

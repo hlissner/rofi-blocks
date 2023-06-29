@@ -38,6 +38,7 @@ void rofi_view_set_selected_line(const RofiViewState* state, unsigned int select
 unsigned int rofi_view_get_next_position(const RofiViewState* state);
 void rofi_view_handle_text(RofiViewState* state, char* text);
 void rofi_view_clear_input(RofiViewState* state);
+void rofi_view_trigger_action_by_name(RofiViewState *state, const char *name);
 G_MODULE_EXPORT Mode mode;
 
 
@@ -243,6 +244,12 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         if (data->entry_to_focus >= 0) {
             g_debug("entry_to_focus %li", data->entry_to_focus);
             rofi_view_set_selected_line(state, (unsigned int) data->entry_to_focus);
+        }
+
+        if (data->page->trigger != NULL) {
+            rofi_view_trigger_action_by_name(state, data->page->trigger->str);
+            g_string_free(data->page->trigger, TRUE);
+            data->page->trigger = NULL;
         }
 
         old_overlay && g_string_free(old_overlay, TRUE);

@@ -129,6 +129,7 @@ An output payload contains only the Rofi state you want changed. For example:
 | overlay        | Shows overlay with text, hides it if empty or null                                                                                                                                 |
 | placeholder    | Sets the input text while it is empty                                                                                                                                              |
 | prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                                 |
+| trigger        | Trigger a rofi keybinding by name (e.g. `kb-mode-complete`)                                                                                                                        |
 
 ### Line properties
 | Property      | Description                                                                  |
