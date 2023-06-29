@@ -28,6 +28,7 @@ typedef struct RofiViewState RofiViewState;
 void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
 RofiViewState* rofi_view_get_active(void);
 extern uint32_t rofi_view_set_icon(RofiViewState *state, const char *icon, gboolean preload);
+extern void rofi_view_set_input(RofiViewState *state, const char *text, gboolean refilter);
 extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
 extern void rofi_view_set_placeholder(RofiViewState* state, const char* text);
 extern void rofi_view_set_case_sensitive(RofiViewState* state, unsigned int case_sensitive);
@@ -36,8 +37,6 @@ const char* rofi_view_get_user_input(const RofiViewState* state);
 unsigned int rofi_view_get_selected_line(const RofiViewState* state);
 void rofi_view_set_selected_line(const RofiViewState* state, unsigned int selected_line);
 unsigned int rofi_view_get_next_position(const RofiViewState* state);
-void rofi_view_handle_text(RofiViewState* state, char* text);
-void rofi_view_clear_input(RofiViewState* state);
 void rofi_view_trigger_action_by_name(RofiViewState *state, const char *name);
 G_MODULE_EXPORT Mode mode;
 
@@ -230,8 +229,7 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         }
 
         if (!page_data_is_string_equal(old_input, new_input)) {
-            rofi_view_clear_input(state);
-            rofi_view_handle_text(state, new_input->str);
+            rofi_view_set_input(state, new_input->str, -1);
         }
 
         if (!page_data_is_string_equal(old_prompt, new_prompt)) {

@@ -31,6 +31,9 @@ mkShell {
         # Adds a function to preload icons, and change the "icon" widget's icon
         # on-the-fly.
         ./patches/rofi-view-set-icon.patch
+        # A less intrusive input setter function (including an attempt to
+        # restore the selection after refiltering)
+        ./patches/rofi-view-set-input.patch
         # Adds a function to change placeholder on-the-fly
         ./patches/rofi-view-set-placeholder.patch
         # Adds a function to trigger keybinds by name.
