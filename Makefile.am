@@ -1,6 +1,6 @@
 # SUBDIRS = src tests
 ACLOCAL_AMFLAGS=-I m4
-plugindir=$(XDG_CONFIG_HOME)/rofi/plugins
+plugindir=@rofi_PLUGIN_INSTALL_DIR@
 plugin_LTLIBRARIES=blocks.la
 blocks_la_SOURCES=\
 	src/blocks.c\
