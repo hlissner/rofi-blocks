@@ -5,10 +5,7 @@
 > Users that have used rofi-blocks before and are interested in the work here,
 > be warned, it contains many backwards-incompatible changes:
 >
-> - This fork depends on some patches to Rofi that only exist in this repo.
->   Find them in `patches/`. Feel free to PR them upstream if you think they
->   have merit, but not as-is -- they are designed for minimal impact more than
->   correctness.
+> - This fork depends on [my fork of Rofi](https://github.com/hlissner/rofi).
 > - Events:
 >   - Changes the default event format to `{"event":"{{event}}",
 >     "value":"{{value_escaped}}", "data":"{{data_escaped}}"}`. `{{event}}` was

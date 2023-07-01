@@ -10,37 +10,15 @@ mkShell {
     wrapGAppsHook
   ];
   buildInputs = [
-    (rofi-unwrapped.overrideAttrs (final: prev: {
-      version = "1.7.5-dev";
+    (rofi-unwrapped.overridDerivation (prev: {
+      version = "1.7.5-dev-fork";
       src = fetchFromGitHub {
-        owner = "davatorium";
+        owner = "hlissner";
         repo = "rofi";
-        rev = "7814da7ee42ee7763cbced5ac1dc0f6f39369ab2";
-        sha256 = "0cwbrqr6b1abi5ib7jj97in3qz8gxlc3frw5yln61g2pvgd81qfc";
+        rev = "32ffee7ddd962a23624cccd2f4e059aa1a8a9e53";
+        sha256 = "0l71r79dj1n1bycnlllxqzkkq33lsg1jxy86c8n86b3i8hj4k2px";
         fetchSubmodules = true;
       };
-      patches = [
-        # Call mode_preprocess_input even when input is empty, and generate
-        # tokens from its returned pattern (affects filtering and highlights).
-        ./patches/mode-preprocess-input.patch
-        # Add new mode function: _selection_changed, to be called whenever the
-        # active row changes (with debouncing).
-        ./patches/mode-selection-changed.patch
-        # Adds a function to change case sensitivity on-the-fly.
-        ./patches/rofi-view-set-case-sensitive.patch
-        # Adds a function to either change the "icon" widget's icon on-the-fly,
-        # or preload new ones in the background.
-        ./patches/rofi-view-set-icon.patch
-        # Adds a method for changing the inputbar contents without changing the
-        # selected row (if possible), while setting the cursor position.
-        ./patches/rofi-view-set-input.patch
-        # Adds a function to change placeholder text on-the-fly.
-        ./patches/rofi-view-set-placeholder.patch
-        # Adds a function to trigger keybinds by name.
-        ./patches/rofi-view-trigger-action-by-name.patch
-        # Support -password option universally.
-        ./patches/universal-password-flag.patch
-      ];
     }))
     pango
     glib
