@@ -10,7 +10,7 @@ mkShell {
     wrapGAppsHook
   ];
   buildInputs = [
-    (rofi-unwrapped.overridDerivation (prev: {
+    (rofi-unwrapped.overrideDerivation (prev: {
       version = "1.7.5-dev-fork";
       src = fetchFromGitHub {
         owner = "hlissner";
