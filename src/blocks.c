@@ -26,7 +26,6 @@
 
 
 typedef struct RofiViewState RofiViewState;
-void rofi_view_switch_mode(RofiViewState* state, Mode* mode);
 RofiViewState* rofi_view_get_active(void);
 extern uint32_t rofi_view_set_icon(RofiViewState *state, const char *icon, gboolean preload);
 extern void rofi_view_set_input(RofiViewState *state, const char *text, gboolean refilter);
@@ -34,6 +33,7 @@ extern void rofi_view_set_overlay(RofiViewState* state, const char* text);
 extern void rofi_view_set_placeholder(RofiViewState* state, const char* text);
 extern void rofi_view_set_case_sensitive(RofiViewState* state, unsigned int case_sensitive);
 extern void rofi_view_reload(void);
+extern void rofi_view_update_prompt(RofiViewState *state);
 const char* rofi_view_get_user_input(const RofiViewState* state);
 unsigned int rofi_view_get_selected_line(const RofiViewState* state);
 void rofi_view_set_selected_line(const RofiViewState* state, unsigned int selected_line);
@@ -218,10 +218,11 @@ static gboolean on_new_input(GIOChannel* source, GIOCondition condition, gpointe
         }
 
         if (!page_data_is_string_equal(old_prompt, new_prompt)) {
-            g_free(sw->display_name);
-            sw->display_name = g_strdup(new_prompt->str);
-            // rofi_view_reload does not update prompt, that is why this is needed
-            rofi_view_switch_mode(state, sw);
+            if (sw->display_name) {
+                g_free(sw->display_name);
+            }
+            sw->display_name = new_prompt ? g_strdup(new_prompt->str) : NULL;
+            rofi_view_update_prompt(state);
         }
 
         if (data->entry_to_focus >= 0) {
