@@ -3,6 +3,7 @@
 
 #define G_LOG_DOMAIN "BlocksMode"
 
+#include <config.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -346,10 +347,7 @@ static int blocks_mode_init(Mode* sw) {
 
     pd->read_channel_watcher = g_io_add_watch(pd->read_channel, G_IO_IN, on_new_input, sw);
 
-    char abi[8];
-    snprintf(abi, 8, "%d", ABI_VERSION);
-    // TODO: Read version dynamically
-    blocks_mode_private_data_write_to_channel(pd, Event__INIT, "0.1.0", abi);
+    blocks_mode_private_data_write_to_channel(pd, Event__INIT, PACKAGE_VERSION, ROFI_PACKAGE_VERSION);
     return TRUE;
 }
 

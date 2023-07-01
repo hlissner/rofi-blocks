@@ -66,6 +66,8 @@ LT_INIT([disable-static])
 dnl ---------------------------------------------------------------------
 dnl Add extra compiler flags
 dnl ---------------------------------------------------------------------
+AC_DEFINE([PACKAGE_VERSION], "AC_PACKAGE_VERSION", [Version of this package])
+AC_DEFINE_UNQUOTED([ROFI_PACKAGE_VERSION], "$(rofi -version | cut -d' ' -f2 | tr -d "\n")", [Version of Rofi])
 AC_SUBST([AM_CFLAGS])
 
 AC_CONFIG_FILES([Makefile tests/Makefile src/Makefile ])
