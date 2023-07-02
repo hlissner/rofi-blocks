@@ -136,7 +136,7 @@ An output payload contains only the Rofi state you want changed. For example:
 | Property      | Description                                                                  |
 |---------------|------------------------------------------------------------------------------|
 | text          | entry text                                                                   |
-| metatext      | text to match against. If null, text is used.                                |
+| meta          | what to match against. If null, text is used.                                |
 | urgent        | flag: defines entry as urgent                                                |
 | highlight     | flag: highlight the entry                                                    |
 | markup        | flag: enables/disables pango markup. If omitted, `-markup-rows` is respected |

@@ -462,8 +462,8 @@ static int blocks_mode_token_match(const Mode* sw, rofi_int_matcher** tokens, un
         tokens = data->tokens;
     }
     gchar* text = line->text;
-    if (line->metatext != NULL) {
-        text = line->metatext;
+    if (line->meta != NULL) {
+        text = line->meta;
     } else if (!line->markup) {
         return helper_token_match(tokens, text);
     }

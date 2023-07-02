@@ -29,7 +29,7 @@ typedef struct {
 
 typedef struct {
     gchar* text;
-    gchar* metatext;
+    gchar* meta;
     gchar* icon;
     gchar* data;
     gboolean urgent;
@@ -66,7 +66,7 @@ LineData* page_data_get_line_by_index_or_else(PageData* page, unsigned int index
 
 void page_data_add_line(PageData* page,
                         const gchar* label,
-                        const gchar* metatext,
+                        const gchar* meta,
                         const gchar* icon,
                         const gchar* data,
                         gboolean urgent,
