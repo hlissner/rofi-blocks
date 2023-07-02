@@ -14,25 +14,29 @@
 >   - Adopts a new naming convention for input and event parameters for simpler
 >     parsing, by replacing all spaces with underscores: E.g. `event format` =>
 >     `event_format`.
->   - Renames two events to closer match the keybindings that invoke them:
+>   - Renames some events to closer match the keybindings that invoke them, or
+>     make their naming more consistent:
 >     - `SELECT_ENTRY` => `ACCEPT_ENTRY`
->     - `EXEC_CUSTOM_INPUT` => `ACCEPT_INPUT`
+>     - `ACTIVE_ENTRY` => `SELECT_ENTRY`
+>     - `EXEC_CUSTOM_INPUT` => `ACCEPT_CUSTOM`
+>     - `INPUT_CHANGE` => `INPUT`
 >   - Adds six new events: `INIT`, `CANCEL`, `EXIT`, `COMPLETE`,
->     `ACCEPT_ENTRY_ALT`, and `ACCEPT_INPUT_ALT`. (Details below).
+>     `ACCEPT_ENTRY_ALT`, and `ACCEPT_CUSTOM_ALT`. (Details below).
 >   - Changes the behavior of three pre-existing events:
->     - `ACTIVE_ENTRY` events are emitted whenever the user changes the selected
+>     - `SELECT_ENTRY` events are emitted whenever the user changes the selected
 >       line, and is no longer tied specifically (or exclusively) to the
->       `CUSTOM_KEY` event.
->     - `CUSTOM_KEY` events can now be emitted when the list is empty.
->     - `INPUT_CHANGE` is now emitted unconditionally, when the input field is
+>       `CUSTOM` event.
+>     - `CUSTOM` events can now be emitted when the list is empty.
+>     - `INPUT` is now emitted unconditionally, when the input field is
 >       changed.
-> - Input parameters:
+> - Some input parameters were changed:
 >   - Renames `input_format` to `event_format`.
->   - Renames `active_entry` to `active_line`.
->   - Removes `input_action` and replaces it with `filter` and `case_sensitive`
->     fields. (Details below)
->   - Adds a `icon` parameter. (Details below)
->   - Adds a `filter` parameter to lines. (Details below)
+>   - Renames `active_entry` to `selected_line`.
+>   - Removes `input_action` and replaces it with new `filter` and
+>     `case_sensitive` fields. (Details below)
+>   - Adds `icon`. (Details below)
+>   - Adds `trigger`. (Details below)
+>   - Adds `placeholder`. (Details below)
 
 # rofi-blocks
 This Rofi modi allows for live manipulation of Rofi's content through an
@@ -87,7 +91,6 @@ All payloads are formatted as JSON, but this can be changed.
 An output payload contains only the Rofi state you want changed. For example:
 ```json
 {
-  "active_line": 0,
   "case_sensitive": false,
   "event_format": "{\"event\":\"{{event}}\", \"value\":\"{{value_escaped}}\", \"data\":\"{{data_escaped}}\"}",
   "filter": "",
@@ -95,6 +98,7 @@ An output payload contains only the Rofi state you want changed. For example:
   "input": "",
   "message": "",
   "overlay": "",
+  "selected_line": 0,
   "prompt": "",
 
   "lines":[
@@ -114,7 +118,6 @@ An output payload contains only the Rofi state you want changed. For example:
 ### Output properties
 | Property       | Description                                                                                                                                                                        |
 |----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| active_line    | Zero-based index of the screen line to select: <br> - a value equal or larger than the number of lines will focus the last entry. <br> - negative or floating numbers are ignored. |
 | case_sensitive | If true, filtering is case sensitive                                                                                                                                               |
 | close_on_exit  | If true, close rofi when the connected process exits                                                                                                                               |
 | event_format   | Format used for events emitted to stdout; details in next section                                                                                                                  |
@@ -126,12 +129,14 @@ An output payload contains only the Rofi state you want changed. For example:
 | overlay        | Shows overlay with text, hides it if empty or null                                                                                                                                 |
 | placeholder    | Sets the input text while it is empty                                                                                                                                              |
 | prompt         | Sets prompt text. Note: due to a Rofi limitation, the prompt still consumes space if empty or null                                                                                 |
+| selected_line  | Zero-based index of the screen line to select: <br> - a value equal or larger than the number of lines will focus the last entry. <br> - negative or floating numbers are ignored. |
 | trigger        | Trigger a rofi keybinding by name (e.g. `kb-mode-complete`)                                                                                                                        |
 
 ### Line properties
 | Property      | Description                                                                  |
 |---------------|------------------------------------------------------------------------------|
 | text          | entry text                                                                   |
+| metatext      | text to match against. If null, text is used.                                |
 | urgent        | flag: defines entry as urgent                                                |
 | highlight     | flag: highlight the entry                                                    |
 | markup        | flag: enables/disables pango markup. If omitted, `-markup-rows` is respected |
@@ -159,19 +164,19 @@ Each `{{parameter}}` is replaced as per the table below:
 | data_escaped  | `{{data_escaped}}`  | additional data of the event,  escaped to be inserted on a json string                                                                                                                                                                                    |
 
 ### Events
-| Name             | Value                          | Data                           | Description                                                                                            |
-|------------------|--------------------------------|--------------------------------|--------------------------------------------------------------------------------------------------------|
-| INIT             | rofi_blocks_version (string)   | rofi_abi_version (string)      | emitted once, when rofi-blocks is ready                                                                |
-| ACTIVE_ENTRY     | active entry text or "" if n/a | active entry data or "" if n/a | emitted each time the selected entry changes                                                           |
-| ACCEPT_ENTRY     | active entry text              | active entry data              | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
-| ACCEPT_ENTRY_ALT | active entry text              | active entry data              | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
-| DELETE_ENTRY     | active entry text              | active entry data              | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
-| ACCEPT_INPUT     | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
-| ACCEPT_INPUT_ALT | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
-| COMPLETE         | ""                             | ""                             | when `kb-mode-complete` is typed                                                                       |
-| CUSTOM_KEY       | keycode (integer)              | "1" if active entry, else ""   | when a custom key is typed, follows an `ACTIVE_ENTRY` event if list isn't empty                        |
-| INPUT_CHANGE     | input text                     | ""                             | when input changes and input action is set to `send`                                                   |
-| CANCEL           | ""                             | ""                             | when Rofi is aborted by the user (typically with `kb-cancel`)                                          |
-| EXIT             | ""                             | ""                             | as Rofi is closing the mode, whether or not the user initiated it                                      |
+| Name              | Value                          | Data                           | Description                                                                                            |
+|-------------------|--------------------------------|--------------------------------|--------------------------------------------------------------------------------------------------------|
+| INIT              | rofi_blocks_version (string)   | rofi_abi_version (string)      | emitted once, when rofi-blocks is ready                                                                |
+| SELECT_ENTRY      | active entry text or "" if n/a | active entry data or "" if n/a | emitted each time the selected entry changes                                                           |
+| ACCEPT_ENTRY      | active entry text              | active entry data              | when selecting an entry on the list (with the `kb-accept` keybind)                                     |
+| ACCEPT_ENTRY_ALT  | active entry text              | active entry data              | when selecting an entry (with the `kb-accept-alt` keybind)                                             |
+| ACCEPT_CUSTOM     | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom` (or `kb-accept`, when list is empty)         |
+| ACCEPT_CUSTOM_ALT | input text                     | "1" if active entry, else ""   | when submitting custom input by typing `kb-accept-custom-alt` (or `kb-accept-alt`, when list is empty) |
+| DELETE_ENTRY      | active entry text              | active entry data              | when deleting an entry (with the `kb-delete-entry` keybind)                                            |
+| COMPLETE          | ""                             | ""                             | when `kb-mode-complete` is typed                                                                       |
+| CUSTOM            | keycode (integer)              | "1" if active entry, else ""   | when a custom key is typed, follows an `SELECT_ENTRY` event if list isn't empty                        |
+| INPUT             | new input text                 | ""                             | when input changes                                                                                     |
+| CANCEL            | ""                             | ""                             | when Rofi is aborted by the user (typically with `kb-cancel`)                                          |
+| EXIT              | ""                             | ""                             | as Rofi is closing the mode, whether or not the user initiated it                                      |
 
 > Details on Rofi keybinds are available [in the Rofi manual](https://github.com/davatorium/rofi/blob/next/doc/rofi-keys.5.markdown).
