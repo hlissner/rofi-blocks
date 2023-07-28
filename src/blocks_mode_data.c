@@ -60,7 +60,7 @@ static void blocks_mode_private_data_update_event_format(BlocksModePrivateData* 
 }
 
 static void blocks_mode_private_data_update_focus_entry(BlocksModePrivateData* data) {
-    data->entry_to_focus = json_object_get_int_member_or_else(data->root, "active_line", -1);
+    data->entry_to_focus = json_object_get_int_member_or_else(data->root, "selected_line", -1);
 }
 
 static void blocks_mode_private_data_update_close_on_child_exit(BlocksModePrivateData* data) {
